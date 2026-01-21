@@ -4,17 +4,22 @@ import string
 from flask import Flask, render_template, request, redirect, url_for, session
 from contextlib import contextmanager
 from datetime import datetime, timedelta, date, time
+import os
 
+DB_HOST = os.environ.get("DB_HOST", "flytaudb.covk0aacgf9k.us-east-1.rds.amazonaws.com")
+DB_USER = os.environ.get("DB_USER", "admin")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "admin-flytau")
+DB_NAME = os.environ.get("DB_NAME", "flytaudb") 
 @contextmanager
 def db_cur():
     mydb = None
     cursor = None
     try:
         mydb = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="root",
-            database="flytau",
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
             autocommit=True
         )
         cursor = mydb.cursor(dictionary=True)
@@ -715,7 +720,3 @@ def clear_session():
     for key in keys:
         if key not in keep_keys:
             session.pop(key, None)            
-            
-
-
-

@@ -1,10 +1,24 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import utils
+import os
+from datetime import timedelta
 
-app = Flask(__name__)
-app.secret_key = 'super_secret_key'
+application = Flask(__name__)
+session_dir = os.path.join(os.getcwd(), "flask_session_data")
+if not os.path.exists(session_dir):
+    os.makedirs(session_dir)
 
-@app.before_request
+application.config.update(
+    SESSION_TYPE="filesystem",
+    SESSION_FILE_DIR=session_dir,
+    SESSION_PERMANENT=True,
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
+    SESSION_REFRESH_EACH_REQUEST=True,
+    SESSION_COOKIE_SECURE=False
+)
+application.secret_key = 'super_secret_key'
+
+@application.before_request
 def save_last_visited_url():
     # List of endpoints to ignore for history tracking
     ignored_endpoints = ['static', 'go_back', 'log_out']
@@ -25,7 +39,7 @@ def save_last_visited_url():
             history.pop(0)
         session['url_history'] = history
 
-@app.route('/go_back')
+@application.route('/go_back')
 def go_back():
     history = session.get('url_history', [])
     if len(history) > 1:
@@ -38,12 +52,12 @@ def go_back():
         return redirect(history[0])
     return redirect('/')
 
-@app.route('/log_out', methods=['POST','GET'])
+@application.route('/log_out', methods=['POST','GET'])
 def log_out():
     session.clear()
     return redirect('/')
 
-@app.route('/', methods=['POST','GET'])
+@application.route('/', methods=['POST','GET'])
 def home_page():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -67,7 +81,7 @@ def home_page():
         return render_template('home_page.html', origin = session["origin"], destination = session["destination"])
 
 
-@app.route('/seat_select', methods=['POST','GET'])
+@application.route('/seat_select', methods=['POST','GET'])
 def seat_select():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -92,7 +106,7 @@ def seat_select():
                            economy_occupied = economy_occupied,
                            business_occupied = business_occupied)
 
-@app.route('/customer_summary', methods=['POST','GET'])
+@application.route('/customer_summary', methods=['POST','GET'])
 def customer_summary():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -145,7 +159,7 @@ def customer_summary():
     else:
         return redirect('/guest_login')
 
-@app.route('/guest_login', methods=['POST','GET'])
+@application.route('/guest_login', methods=['POST','GET'])
 def guest_login():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -165,7 +179,7 @@ def guest_login():
         return redirect('/customer_summary')
     return render_template('way_to_login.html')
 
-@app.route('/add_flight', methods=['POST','GET'])
+@application.route('/add_flight', methods=['POST','GET'])
 def add_flight():
     if request.method == 'POST':
         utils.update_db()
@@ -190,7 +204,7 @@ def add_flight():
             destination = cursor.fetchall()
         return render_template('manager_flight.html', origin = origin, destination = destination)
 
-@app.route('/manager_assignments', methods=['POST','GET'])
+@application.route('/manager_assignments', methods=['POST','GET'])
 def manager_assignments():
     error_msg = None 
     if request.method == 'POST':
@@ -227,7 +241,7 @@ def manager_assignments():
         return render_template('manager_assignments.html', available_flight_attendants = available_flight_attendants,
                                available_pilots = available_pilots, available_plane = available_plane, duration=session["duration"])
 
-@app.route('/manager_login', methods=['POST','GET'])
+@application.route('/manager_login', methods=['POST','GET'])
 def manager_login():
     if request.method == 'POST':
         session["id"] = request.form.get('id')
@@ -243,7 +257,7 @@ def manager_login():
     else:
         return render_template('manager_login.html')
 
-@app.route('/manager_homepage', methods=['POST','GET'])
+@application.route('/manager_homepage', methods=['POST','GET'])
 def manager_homepage():
     if request.method == 'POST':
         utils.update_db()
@@ -264,7 +278,7 @@ def manager_homepage():
             session["destination"] = cursor.fetchall()
         return render_template('manager_homepage.html', origin=session["origin"], destination=session["destination"])
 
-@app.route('/cancel_flight', methods=['POST'])
+@application.route('/cancel_flight', methods=['POST'])
 def cancel_flight():
     session["selected_flight_key"] = request.form.get('selected_flight_key')
     plane_id, dep_date, dep_time = session["selected_flight_key"].split("|")
@@ -300,7 +314,7 @@ def cancel_flight():
         
     return render_template('cancel_flight.html', flight = flight, assignments = assignments, affected_flights=affected_flights)
 
-@app.route('/confirm_cancel_flight', methods=['POST'])
+@application.route('/confirm_cancel_flight', methods=['POST'])
 def confirm_cancel_flight():
     flight_key_parts = request.form.get('selected_flight_key').split("|")
     plane_id = flight_key_parts[0]
@@ -331,7 +345,7 @@ def confirm_cancel_flight():
     flash("Flight successfully cancelled!", "success")
     return redirect("/manager_homepage")
 
-@app.route('/add_employee', methods=['POST','GET'])
+@application.route('/add_employee', methods=['POST','GET'])
 def add_employee():
     if request.method == 'POST':
         id = request.form.get('id')
@@ -350,7 +364,7 @@ def add_employee():
     else:
         return render_template('add_employee.html')
 
-@app.route('/add_plane', methods=['POST','GET'])
+@application.route('/add_plane', methods=['POST','GET'])
 def add_plane():
     if request.method == 'POST':
         plane_id = request.form.get('plane_id')
@@ -374,7 +388,7 @@ def add_plane():
     else:
         return render_template('add_plane.html')
 
-@app.route('/finalize_flight', methods=['POST','GET'])
+@application.route('/finalize_flight', methods=['POST','GET'])
 def finalize_flight():
     flight = utils.Flight(session["plane"][0], session["time"], session["date"], session["origin"], session["destination"])
     
@@ -389,7 +403,7 @@ def finalize_flight():
     flash("Flight created successfully!", "success")
     return redirect("/manager_homepage")
 
-@app.route('/finalize_customer', methods=['POST','GET'])
+@application.route('/finalize_customer', methods=['POST','GET'])
 def finalize_customer():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -409,7 +423,7 @@ def finalize_customer():
     flash("Order placed successfully!", "success")
     return redirect("/")
 
-@app.route('/customer_login', methods=['POST','GET'])
+@application.route('/customer_login', methods=['POST','GET'])
 def customer_login():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -447,7 +461,7 @@ def customer_login():
                 session['flow_return_url'] = '/'
         return render_template('customer_login.html')
 
-@app.route('/customer_signup', methods=['POST','GET'])
+@application.route('/customer_signup', methods=['POST','GET'])
 def customer_signup():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -478,7 +492,7 @@ def customer_signup():
                 session['flow_return_url'] = '/'
         return render_template('signup.html')
 
-@app.route('/final_signup', methods=['POST','GET'])
+@application.route('/final_signup', methods=['POST','GET'])
 def final_signup():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -499,7 +513,7 @@ def final_signup():
     else:
         return render_template('final_signup.html')
     
-@app.route('/order_management', methods=['POST','GET'])
+@application.route('/order_management', methods=['POST','GET'])
 def order_management():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -508,6 +522,7 @@ def order_management():
         email = request.form.get('email')
         session['order_id'] = request.form.get('order_number')
         is_cancellable = False
+        order_status = None
         with utils.db_cur() as cursor:
             cursor.execute("SELECT * FROM ticket WHERE fk_ticket_order_id = %s", (session['order_id'],))
             tickets = cursor.fetchall()
@@ -529,7 +544,7 @@ def order_management():
         utils.update_db()
         return render_template('order_management.html')    
  
-@app.route('/purchase_history', methods=['POST','GET'])
+@application.route('/purchase_history', methods=['POST','GET'])
 def purchase_history():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -561,7 +576,7 @@ def purchase_history():
                 order['total_price'], order['origin'], order['destination'], order['departure_time'], order['departure_date'], order['arrival_date'], order['arrival_time'], order['duration'] = utils.order_details(order['order_id'])
         return render_template('purchase_history.html')
 
-@app.route('/cancel_order', methods=['POST','GET'])
+@application.route('/cancel_order', methods=['POST','GET'])
 def cancel_order():
     if 'id' in session:
         return redirect('/manager_homepage')
@@ -582,7 +597,7 @@ def cancel_order():
     else:
         return render_template('cancel_order.html', session = session)
 
-@app.route('/reports', methods=['POST','GET'])
+@application.route('/reports', methods=['POST','GET'])
 def reports():
     if request.method == 'POST':
         result1, result2, result3, result4, result5 = utils.reports()   
@@ -590,7 +605,37 @@ def reports():
     else:
         utils.update_db()
         return render_template('reports.html')
+def read_sql_file(filename):
+    with open(filename, 'r', encoding='utf-8') as f:
+        return f.read().split(';')
+
+@application.route('/setup_db')
+def setup_db():
+    try:
+        # שלב 1: בדיקה - אילו טבלאות קיימות כרגע?
+        with utils.db_cur() as cursor:
+            cursor.execute("SHOW TABLES")
+            tables = cursor.fetchall()
+            
+            # אם יש טבלאות, נציג אותן כדי לראות אם יש בעיה של אותיות גדולות/קטנות
+            if tables:
+                return f"<h1>Found Tables: {tables}</h1><p>Check if 'route' matches exactly (case sensitive!).</p>"
+
+        # שלב 2: אם אין טבלאות, ננסה ליצור אותן ונציג שגיאה אם נכשל
+        commands = read_sql_file('MySql_db.sql')
+        with utils.db_cur() as cursor:
+            for command in commands:
+                if command.strip():
+                    try:
+                        cursor.execute(command)
+                    except Exception as sql_err:
+                        # עצור הכל ותראה לי את השגיאה!
+                        return f"<h1>SQL Error Detected:</h1><p><b>Command:</b> {command[:100]}...</p><p><b>Error:</b> {sql_err}</p>"
+                        
+        return "<h1>Success! Tables created perfectly.</h1><a href='/'>Go Home</a>"
+    except Exception as e:
+        return f"<h1>System Error: {e}</h1>"
 
 if __name__ == '__main__':
     print("Running on http://127.0.0.1:5000")
-    app.run(debug=True)
+    application.run(debug=True)
