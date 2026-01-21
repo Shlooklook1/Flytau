@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <h1>
+        Order cancellation
+    </h1>
+    {% if error_msg %}
+    <div class="error-message">{{ error_msg }}</div>
+    {% endif %}
+    <p>
+        Are you sure you want to cancel order {{session["order_number"]}}?
+    </p>
+    <p>
+        The cancellation fee will be {{session["total_price"]*0.05}}$
+    </p>
+    <form action="/order_management" method="GET">
+        <input type="submit" value="Order Management">
+    </form>
+    <form action="/cancel_order" method="POST">
+        <input type="submit" value="Cancel Order">
+    </form>
+    {% endblock %}

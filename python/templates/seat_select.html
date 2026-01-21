@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <h1>
+        Choose your seats!
+    </h1>
+    <form action="/customer_summary" method="POST" class="flight_form">
+        <div class="plane-fuselage">
+            {% if class_list|length == 2 %}
+            <h2 align="center">
+                Business
+            </h2>
+            <table class="seat-map-table">
+                {% set cols = class_list[1].cols %}
+                {% set mid = cols // 2 %}
+                {% for i in range(class_list[1].rows) %}
+                <tr>
+                    {% for j in range(cols) %}
+
+                    {% if cols % 2 == 0 and j == mid %}
+                    <td class="aisle-spacer"></td>
+                    {% endif %}
+
+                    {% if cols % 2 != 0 and j == mid %}
+                    <td class="aisle-spacer"></td>
+                    {% endif %}
+
+                    {% set business_seat = (i+1) ~ "-" ~ (j+1) %}
+                    <td>
+                        {% if business_seat in business_occupied %}
+                        <div class="seat-box occupied">X</div>
+                        {% else %}
+                        <label class="seat-box available">
+                            <input type="checkbox" name="business_choice" value="{{business_seat}}|Business">
+                            {{business_seat}}
+                        </label>
+                        {% endif %}
+                    </td>
+
+                    {% if cols % 2 != 0 and j == mid %}
+                    <td class="aisle-spacer"></td>
+                    {% endif %}
+
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+            <h2 align="center">
+                Economy
+            </h2>
+            <table class="seat-map-table">
+                {% set cols = class_list[0].cols %}
+                {% set mid = cols // 2 %}
+                {% for i in range(class_list[0].rows) %}
+                <tr>
+                    {% for j in range(cols) %}
+
+                    {% if cols % 2 == 0 and j == mid %}
+                    <td class="aisle-spacer"></td>
+                    {% endif %}
+
+                    {% if cols % 2 != 0 and j == mid %}
+                    <td class="aisle-spacer"></td>
+                    {% endif %}
+
+                    {% set economy_seat = (i+1) ~ "-" ~ (j+1) %}
+                    <td>
+                        {% if economy_seat in economy_occupied %}
+                        <div class="seat-box occupied">X</div>
+                        {% else %}
+                        <label class="seat-box available">
+                            <input type="checkbox" name="economy_choice" value="{{economy_seat}}|Economy">
+                            {{economy_seat}}
+                        </label>
+                        {% endif %}
+                    </td>
+
+                    {% if cols % 2 != 0 and j == mid %}
+                    <td class="aisle-spacer"></td>
+                    {% endif %}
+
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <input type="submit" value="Select" class="submit-button">
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <h1>
+        Reports
+    </h1>
+    <form action="/reports" method="POST" class="flight_form">
+        <h2>
+            Choose your desired reports:
+        </h2>
+        <table>
+            <tr>
+                <th>
+                    Choose
+                </th>
+                <th>
+                    Report
+                </th>
+            </tr>
+            <tr>
+                <td>
+                    <input type="checkbox" name="report" value="1">
+                </td>
+                <td>
+                    Average occupancy landed flights
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="checkbox" name="report" value="2">
+                </td>
+                <td>
+                    Revenue by aircraft size, manufacturer and class
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="checkbox" name="report" value="3">
+                </td>
+                <td>
+                    Cumulative flight hours of various employees, seperated by long/short flights
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="checkbox" name="report" value="4">
+                </td>
+                <td>
+                    Monthly orders cancelation rate
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="checkbox" name="report" value="5">
+                </td>
+                <td>
+                    Monthly activity summary for each aircraft in the fleet (number of flights performed, number of flights cancelled, utilization percantage, dominant route)
+                </td>
+            </tr>
+        </table>
+        <input type="submit" value="Select" class="submit-button">
+    </form>
+</div>
+<div align="center">
+    {% if result1 %}
+    <h2>
+        Average occupancy landed flights
+    </h2>
+    <p>
+        The average occupancy of landed flights is: {{result1.average_passengers_per_landed_flight}} customers per flight.
+    </p>
+    {% endif %}
+    {% if result2 %}
+    <h2>
+        Revenue by aircraft size, manufacturer and class
+    </h2>
+    <table>
+        <tr>
+            <th>
+                Size
+            </th>
+            <th>
+                Manufacturer
+            </th>
+            <th>
+                Class
+            </th>
+            <th>
+                Revenue
+            </th>
+        </tr>
+        {% for class in result2 %}
+        <tr>
+            <td>
+                {{class['Plane_size']}}
+            </td>
+            <td>
+                {{class['Plane_manufacturer']}}
+            </td>
+            <td>
+                {{class['Class']}}
+            </td>
+            <td>
+                {{class['Total_income']}}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+    {% if result3 %}
+    <h2>
+        Cumulative flight hours of various employees, seperated by long/short flights
+    </h2>
+    <table>
+        <tr>
+            <th>
+                Employee ID
+            </th>
+            <th>
+                First name
+            </th>
+            <th>
+                Last name
+            </th>
+            <th>
+                Role
+            </th>
+            <th>
+                Total short flight hours
+            </th>
+            <th>
+                Total long flight hours
+            </th>
+        </tr>
+        {% for employee in result3 %}
+        <tr>
+            <td>
+                {{employee['id']}}
+            </td>
+            <td>
+                {{employee['first_name']}}
+            </td>
+            <td>
+                {{employee['last_name']}}
+            </td>
+            <td>
+                {{employee['role']}}
+            </td>
+            <td>
+                {{employee['Short_flights_hours']}}
+            </td>
+            <td>
+                {{employee['Long_flights_hours']}}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+    {% if result4 %}
+    <h2>
+        Monthly orders cancelation rate
+    </h2>
+    <table>
+        <tr>
+            <th>
+                Year
+            </th>
+            <th>
+                Month
+            </th>
+            <th>
+                Cancelation rate
+            </th>
+        </tr>
+        {% for month in result4 %}
+        <tr>
+            <td>
+                {{month['Year']}}
+            </td>
+            <td>
+                {{month['Month']}}
+            </td>
+            <td>
+                {{month['AVG_Cancelation']}}%
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+    {% if result5 %}
+    <h2>
+        Monthly activity summary for each aircraft in the fleet (number of flights performed, number of flights cancelled, utilization percantage, dominant route)
+    </h2>
+    <table>
+        <tr>
+            <th>
+                Aircraft ID
+            </th>
+            <th>
+                Year
+            </th>
+            <th>
+                Month
+            </th>
+            <th>
+                Landed flights
+            </th>
+            <th>
+                Cancelled flights
+            </th>
+            <th>
+                Utilization percentage
+            </th>
+            <th>
+                Dominant route
+            </th>
+        </tr>
+        {% for aircraft in result5 %}
+        <tr>
+            <td>
+                {{aircraft['plane_id']}}
+            </td>
+            <td>
+                {{aircraft['Year']}}
+            </td>
+            <td>
+                {{aircraft['Month']}}
+            </td>
+            <td>
+                {{aircraft['Landed_flights']}}
+            </td>
+            <td>
+                {{aircraft['Cancelled_flights']}}
+            </td>
+            <td>
+                {{aircraft['Utilization']}}%
+            </td>
+            <td>
+                {{aircraft['Dominant_route']}}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+{% endblock %}

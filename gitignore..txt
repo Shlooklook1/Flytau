@@ -1,0 +1,13 @@
+# Python temporary files
+__pycache__/
+*.py[cod]
+
+# IDE settings (PyCharm / VSCode)
+.idea/
+.vscode/
+
+# Environment variables (secrets)
+.env
+
+# MacOS system files (if relevant)
+.DS_Store

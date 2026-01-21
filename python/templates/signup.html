@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <h1>
+        Please signup
+    </h1>
+    {% if error_msg %}
+    <p style="color: red;">{{ error_msg }}</p>
+    <form action="/customer_signup" method="get">
+        <input type="submit" value="Try Again">
+    </form>
+    {% else %}
+    <form action="/customer_signup" method="POST">
+        <table>
+            <tr>
+                <td>
+                    Email:
+                </td>
+                <td>
+                    <input type="email" name="email" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    First_name:
+                </td>
+                <td>
+                    <input type="text" name="first_name" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Last_name:
+                </td>
+                <td>
+                    <input type="text" name="last_name" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Number of phone numbers:
+                </td>
+                <td>
+                    <input type="number" name="num_of_phone_numbers" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Passport number:
+                </td>
+                <td>
+                    <input type="number" name="passport_number" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Birth date:
+                </td>
+                <td>
+                    <input type="date" name="birth_date" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Password:
+                </td>
+                <td>
+                    <input type="password" name="password" required>
+                </td>
+            </tr>
+        </table>
+        <input type="submit" value="Signup">
+    </form>
+</div>
+{% endif %}
+{% endblock %}

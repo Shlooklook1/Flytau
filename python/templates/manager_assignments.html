@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <h1>
+        Choose your desired crew and plane for your {% if duration >= 360 %}long{% else %}short{% endif %} flight!
+    </h1>
+    {% if error_msg %}
+    <div class="error-message">{{ error_msg }}</div>
+    {% endif %}
+    {% if duration >= 360 %}
+    {% set required_pilots = 3 %}
+    {% set required_attendants = 6 %}
+    {% else %}
+    {% set required_pilots = 2 %}
+    {% set required_attendants = 3 %}
+    {% endif %}
+    <form action="/manager_assignments" method="POST" class="flight_form">
+        <h2>
+            Select pilots (remember to select 2 pilots for a short flight and 3 for a long flight):
+        </h2>
+        {% if available_pilots|length >= required_pilots %}
+        <table class="input-layout">
+            {% for i in available_pilots %}
+            <tr>
+                <input type="checkbox" name="selected_pilot"
+                    value="{{ i['id'] }}|{{ i['first_name'] }}|{{ i['last_name'] }}">
+                {{i['first_name'] }} {{i['last_name']}}
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>No available pilots</p>
+        {% endif %}
+        <h2>
+            Select flight attendants (remember to select 3 for a short flight and 6 for a long flight):
+        </h2>
+        {% if available_flight_attendants|length >= required_attendants %}
+        <table class="input-layout">
+            {% for i in available_flight_attendants %}
+            <tr>
+                <input type="checkbox" name="selected_flight_attendant"
+                    value="{{i['id']}}|{{i['first_name']}}|{{i['last_name']}}"> {{i['first_name'] }} {{i['last_name']}}
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>No available flight attendants</p>
+        {% endif %}
+        <h2>
+            Select plane:
+        </h2>
+        {% if available_plane %}
+        <select name="plane">
+            {% for i in available_plane %}
+            <option value="{{ i['plane_id'] }}|{{ i['size'] }}|{{ i['manufacturer'] }}|{{ i['purchase_date'] }}"
+                required>
+                {{ i['plane_id'] }} {{ i['size'] }} {{ i['manufacturer'] }} {{ i['purchase_date'] }}
+            </option>
+            {% endfor %}
+        </select>
+        {% else %}
+        <p>No available planes</p>
+        {% endif %}
+        <br>
+        <input type="submit" value="add" class="submit-button">
+    </form>
+</div>
+{% endblock %}

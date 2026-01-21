@@ -1,0 +1,555 @@
+@import url('https://fonts.googleapis.com/css2?family=Cantora+One&family=Denk+One&display=swap');
+
+* {
+    font-family: 'Denk One', sans-serif !important;
+}
+
+/* =========================================
+   FLYTAU - Global Styles & Reset
+   ========================================= */
+:root {
+    /* פלטת צבעים עדינה */
+    --primary-blue: #4a90e2;
+    /* כחול שמיים לכפתורים וכותרות */
+    --primary-dark: #357abd;
+    /* כחול כהה יותר למעבר עכבר */
+    --secondary-grey: #6c757d;
+    /* אפור לכפתורי חזרה */
+    --text-dark: #333333;
+    /* צבע טקסט ראשי */
+    --text-light: #ffffff;
+    /* טקסט לבן */
+    --bg-overlay-white: rgba(255, 255, 255, 0.92);
+    /* רקע לבן חצי שקוף לתוכן */
+    --success-green: #28a745;
+    /* ירוק לאישורים */
+    --danger-red: #dc3545;
+    /* אדום לשגיאות/תפוס */
+    --seat-selected-yellow: #fff700;
+    /* צהוב למושב נבחר */
+}
+
+body {
+    font-family: 'Denk One', sans-serif;
+    font-size: 18px;
+    /* Bigger text */
+    /* שימוש בתמונת הרקע שסיפקת */
+    background-image: url('Gemini_Generated_Image_kkau3gkkau3gkkau.png');
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed;
+    /* הרקע נשאר קבוע בעת גלילה */
+    color: var(--text-dark);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* =========================================
+   Layout Containers (from base.html)
+   ========================================= */
+
+/* מיכל עוטף ראשי כדי למרכז ולתת רוחב מקסימלי */
+body>div[align="center"] {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* החלק העליון (לוגו, ניווט) */
+.base {
+    background-color: rgba(255, 255, 255, 0.2);
+    /* Semi-transparent for readability */
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: none;
+    margin-bottom: 25px;
+    backdrop-filter: blur(5px);
+}
+
+.base img {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    /* Optional: adds a nice rim */
+}
+
+.content {
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: none;
+    margin-bottom: 30px;
+    backdrop-filter: blur(5px);
+    text-align: center;
+    /* ברירת מחדל למרכז, טפסים יישורו לשמאל */
+}
+
+/* קו הפרדה */
+hr {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0));
+    margin: 20px 0;
+}
+
+.compact-content {
+    max-width: 650px;
+    padding: 25px;
+    margin: 30px auto;
+}
+
+/* =========================================
+   Typography & Links
+   ========================================= */
+h1,
+h2,
+h3 {
+    color: #2c3e50;
+    font-weight: 700;
+    margin-top: 0;
+    font-family: 'Denk One', sans-serif;
+    /* Different font as requested */
+}
+
+h1 {
+    font-size: 4.5rem;
+    /* Bigger */
+    letter-spacing: -1px;
+}
+
+h2 {
+    font-size: 2.2rem;
+    /* Bigger */
+    margin-bottom: 25px;
+}
+
+a {
+    color: var(--primary-blue);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    font-weight: 500;
+}
+
+a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* סגנון להודעות פלאש (שגיאות/הצלחות) */
+/* סגנון להודעות פלאש (שגיאות/הצלחות) */
+.flash-container {
+    margin: 20px auto;
+    max-width: 800px;
+}
+
+.flash-message {
+    padding: 15px 25px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    display: block;
+    /* ensure block to take width */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.flash-message.success {
+    background-color: rgba(212, 237, 218, 0.95);
+    color: #155724;
+    border: 2px solid #c3e6cb;
+}
+
+.flash-message.error {
+    background-color: rgba(248, 215, 218, 0.95);
+    color: #721c24;
+    border: 2px solid #f5c6cb;
+}
+
+/* =========================================
+   Forms & Inputs
+   ========================================= */
+/* יישור טפסים למרכז הדף, אך התוכן שלהם לשמאל */
+form {
+    display: inline-block;
+    text-align: left;
+    width: 100%;
+    max-width: 500px;
+    /* רוחב מקסימלי לטפסים כדי שלא ימתחו */
+}
+
+/* טפסים רחבים יותר (כמו בדוחות או חיפוש) */
+.flight_form,
+form[action="/manager_assignments"] {
+    max-width: 800px;
+}
+
+/* Remove table styling for form layout tables */
+/* Remove inner borders for form layout tables but keep background */
+.flight_form table.input-layout {
+    background-color: rgba(255, 255, 255, 0.6);
+    /* Nice pretty frame as requested */
+    border: 12px solid #a0c9e7;
+    /* Even bigger frame */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-radius: 20px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.flight_form table.input-layout td {
+    border: none;
+    padding: 15px;
+    font-size: 22px;
+    /* Bigger text and emojis */
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+}
+
+/* עיצוב אחיד לכל שדות הקלט */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="email"],
+input[type="date"],
+input[type="datetime-local"],
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    /* קריטי כדי שהפאדינג לא ישבור את הרוחב */
+    font-size: 18px;
+    font-family: inherit;
+    background-color: #fdfdfd;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+/* ========================================= */
+/* Error message styling */
+.error-message {
+    background-color: rgba(255, 235, 238, 0.9);
+    /* Light pink/red background */
+    color: #c62828;
+    /* Strong red text */
+    font-weight: 700;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 2px solid #ef9a9a;
+    display: inline-block;
+    margin: 15px 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================================
+   Buttons
+   ========================================= */
+/* איחוד סגנונות לכל סוגי הכפתורים */
+.btn,
+input[type="submit"],
+button:not(.seat-box-button),
+/* החרגת כפתורים אם יש בתוך מושבים */
+.submit-button {
+    display: inline-block;
+    padding: 15px 40px;
+    /* Bigger padding for cloud shape */
+    /* Glassy button style to match background */
+    background-color: #a0c9e7;
+    /* Uniform blue color */
+    color: #000 !important;
+    /* Dark text for readability */
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    /* Stronger white border for cloud feel */
+    border-radius: 50px;
+    /* Cloud/Pill shape */
+    font-size: 18px;
+    /* Bigger font */
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 10px;
+    /* Increased margin for stacking */
+    text-align: center;
+    backdrop-filter: blur(2px);
+    width: 250px;
+    /* Fixed width for uniformity as requested */
+    box-sizing: border-box;
+}
+
+.btn:hover,
+input[type="submit"]:hover,
+button:hover {
+    background-color: #255e86;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+    border-color: #fff;
+}
+
+/* כפתור "חזור" אפור */
+a.btn[href*="go_back"],
+a.btn[href="/"] {
+    background-color: #a0c9e7;
+}
+
+a.btn[href*="go_back"]:hover,
+a.btn[href="/"]:hover {
+    background-color: #255e86;
+}
+
+/* כפתור מנהל כהה יותר */
+.btn-admin {
+    background-color: #a0c9e7;
+}
+
+.btn-admin:hover {
+    background-color: #255e86;
+}
+
+/* כפתור סכנה (ביטול) */
+.btn-danger {
+    background-color: var(--danger-red);
+}
+
+/* Center submit buttons */
+input[type="submit"],
+.submit-button {
+    display: block !important;
+    margin: 20px auto !important;
+    min-width: 150px;
+}
+
+/* =========================================
+/* =========================================
+   Tables (Results, Reports, History)
+   ========================================= */
+table {
+    width: 100%;
+    max-width: 1100px;
+    margin: 30px auto;
+    border-collapse: separate;
+    /* Changed to separate for border radius */
+    border-spacing: 0;
+    background-color: rgba(255, 255, 255, 0.6);
+    /* Semi-transparent matching other containers */
+    border-radius: 20px;
+    overflow: hidden;
+    /* Pretty frame matching input tables */
+    border: 12px solid #a0c9e7;
+    /* Even bigger frame */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+thead th {
+    background-color: var(--primary-blue);
+    color: var(--text-light);
+    padding: 18px 15px;
+    text-align: left;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    border: 2px solid #357abd;
+    /* Bolder inner border for header */
+}
+
+tbody td {
+    padding: 16px 15px;
+    border: 2px solid #a4b0be;
+    /* Bolder inner borders */
+    color: #2c3e50;
+    vertical-align: middle;
+    font-weight: 600;
+}
+
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background-color: #f8fbfd;
+    /* כחול בהיר מאוד במעבר עכבר */
+}
+
+/* =========================================
+   Seat Selection Styling (The most important part!)
+   ========================================= */
+
+/* קונטיינר לגריד המושבים */
+.seat-grid-container {
+    display: grid;
+    /* ניסיון ליצור גריד גמיש, עד 6 מושבים בשורה */
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    gap: 12px;
+    max-width: 600px;
+    /* רוחב מקסימלי למטוס */
+    margin: 30px auto;
+    padding: 25px;
+    background-color: #f0f2f5;
+    /* רקע בהיר לגריד */
+    border-radius: 12px;
+    border: 2px solid #e1e5eb;
+}
+
+/* Plane Interior styling */
+.plane-fuselage {
+    background-color: #f8fafc;
+    border-left: 15px solid #cbd5e1;
+    /* Side walls */
+    border-right: 15px solid #cbd5e1;
+    border-radius: 40px;
+    /* Smooth corners */
+    padding: 60px 40px;
+    /* Spacious interior */
+    max-width: 600px;
+    margin: 30px auto;
+    box-shadow:
+        inset 10px 0 20px rgba(0, 0, 0, 0.05),
+        /* Inner wall shadow */
+        inset -10px 0 20px rgba(0, 0, 0, 0.05),
+        0 20px 50px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+/* עיצוב מושב (Seat Styling) */
+.seat-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+    /* Increased from 50px */
+    width: 60px;
+    /* Increased from 45px */
+    background-color: #e2e8f0;
+    /* Neutral seat color */
+    border: 1px solid #cbd5e1;
+    border-radius: 14px 14px 6px 6px;
+    /* Chair shape top-heavy */
+    cursor: pointer;
+    font-weight: 700;
+    color: #475569;
+    transition: all 0.2s ease;
+    margin: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: relative;
+}
+
+/* Armrests using pseudo-elements could go here but might break layout */
+
+/* הסתרת תיבת הסימון האמיתית */
+.seat-box input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* אפקט מעבר עכבר על מושב פנוי */
+.seat-box:hover:not(.occupied) {
+    background-color: #bfdbfe;
+    /* Light blue hover */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* --- מושב נבחר (SELECTED) --- */
+.seat-box:has(input:checked) {
+    background-color: var(--primary-blue) !important;
+    color: #fff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+    transform: scale(1.1);
+    transform: scale(1.1);
+    z-index: 10;
+}
+
+/* =========================================
+   Seat Map Table & Aisle
+   ========================================= */
+.seat-map-table {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0 auto;
+}
+
+.seat-map-table td {
+    border: none !important;
+    padding: 0;
+    /* Let margins on seat-box handle spacing */
+    background: transparent !important;
+}
+
+.aisle-spacer {
+    width: 40px;
+    /* Width of the aisle */
+    min-width: 30px;
+}
+
+/* --- מושב תפוס (OCCUPIED) --- */
+/* (יש לוודא שה-Python מוסיף את המחלקה 'occupied' למושבים תפוסים) */
+.seat-box.occupied {
+    background-color: var(--danger-red);
+    /* אדום */
+    color: white;
+    border-color: #c82333;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+/* וידוא שאי אפשר לבחור מושב תפוס */
+.seat-box.occupied:hover {
+    transform: none;
+    background-color: var(--danger-red);
+}
+
+/* =========================================
+   Reports & Charts Styling
+   ========================================= */
+/* קונטיינר לגרפים */
+canvas {
+    max-width: 100%;
+    height: auto !important;
+    margin: 20px auto;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+/* מיכל לכל דוח בנפרד בדף הדוחות */
+.report-container {
+    margin-top: 40px;
+    padding: 30px;
+    background-color: #fff;
+    border: 1px solid #e1e5eb;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}

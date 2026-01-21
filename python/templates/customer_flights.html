@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    {% if flights == [] %}
+    <h1>
+        There are no available flights!
+    </h1>
+    {% else %}
+    <h1>
+        Choose your desired flight!
+    </h1>
+    <form action="/seat_select" method="POST" class="flight_form">
+        <table>
+            <tr>
+                <th> Choose </th>
+                <th> Origin </th>
+                <th> Destination </th>
+                <th> Departure date </th>
+                <th> Departure time </th>
+                <th> Arrival date </th>
+                <th> Arrival time </th>
+                <th> Duration </th>
+                <th> Plane </th>
+            </tr>
+            {% for flight in flights %}
+            <tr>
+                <td>
+                    <input type="radio" name="selected_flight_key"
+                        value="{{ flight['fk_flight_plane_id'] }}|{{ flight['departure_date'] }}|{{ flight['departure_time'] }}"
+                        required>
+                </td>
+                <td> {{flight["fk_origin"]}} </td>
+                <td> {{flight["fk_destination"]}} </td>
+                <td> {{flight["departure_date"]}} </td>
+                <td> {{flight["departure_time"]}} </td>
+                <td> {{flight["arrival_date"]}} </td>
+                <td> {{flight["arrival_time"]}} </td>
+                <td> {{flight["duration"]/60}} hours</td>
+                <td> {{flight["fk_flight_plane_id"]}} </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <div style="text-align: center;">
+            <input type="submit" value="Next" class="submit-button">
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

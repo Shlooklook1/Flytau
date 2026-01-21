@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>FLYTAU</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='decoration.css') }}">
+</head>
+
+<body>
+    <div class="base"
+        style="display: flex; align-items: center; justify-content: space-between; padding: 10px 30px; position: relative;">
+        <!-- Logo Section -->
+        <div>
+            <a href="{% if session.get('id') %}/manager_homepage{% else %}/{% endif %}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="FlyTau Logo"
+                    style="height: 60px; width: auto;">
+            </a>
+        </div>
+
+        <!-- Center: Name -->
+        {% if session.get('name') %}
+        <div
+            style="position: absolute; left: 50%; transform: translateX(-50%); font-weight: 600; font-size: 1.4em; color: #2c3e50; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">
+            Hello, {{session['name']}}
+        </div>
+        {% endif %}
+
+        <!-- Navigation/User Section -->
+        <div style="display: flex; align-items: center; gap: 15px;">
+            {% if request.endpoint not in ['home_page', 'manager_homepage'] or request.method == 'POST' %}
+            <a href="{{ url_for('go_back') }}" class="btn">Go Back</a>
+            {% endif %}
+
+            {% if session.get('name') %}
+            <a href="/log_out" class="btn">Logout</a>
+            {% else %}
+            <a href="/customer_signup" class="btn">Signup</a>
+            <a href="/customer_login" class="btn">Login</a>
+            <a href="/manager_login" class="btn btn-admin">Manager login</a>
+            {% endif %}
+        </div>
+    </div>
+    <hr>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container" align="center">
+        {% for category, message in messages %}
+        <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}
+    {% endblock %}
+</body>
+
+</html>

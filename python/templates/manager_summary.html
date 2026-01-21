@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div align="center">
+    {% if error_msg %}
+    <p style="color: red; font-weight: bold;">{{ error_msg }}</p>
+    <form action="/manager_assignments" method="get">
+        <input type="submit" value="Try Again">
+    </form>
+    {% else %}
+
+    <h1>Summary</h1>
+
+    <table border="1" cellpadding="5" style="border-collapse: collapse; margin-bottom: 30px;">
+        <tr>
+            <th>Origin</th>
+            <th>Destination</th>
+            <th>Departure Date</th>
+            <th>Departure Time</th>
+            <th>Arrival Date</th>
+            <th>Arrival Time</th>
+            <th>Duration</th>
+            <th>Plane ID</th>
+            <th>Size</th>
+            <th>Manufacturer</th>
+            <th>Purchase Date</th>
+        </tr>
+        <tr>
+            <td>{{ origin }}</td>
+            <td>{{ destination }}</td>
+            <td>{{ departure_date }}</td>
+            <td>{{ departure_time }}</td>
+            <td>{{ arrival_date }}</td>
+            <td>{{ arrival_time }}</td>
+            <td>{{ duration/60 }}</td>
+            <td>{{ plane[0] }}</td>
+            <td>{{ plane[1] }}</td>
+            <td>{{ plane[2] }}</td>
+            <td>{{ plane[3] }}</td>
+        </tr>
+    </table>
+</div>
+
+<div style="display: flex; gap: 50px; justify-content: center; margin-bottom: 20px;">
+
+    <div>
+        <h3>Pilots</h3>
+        <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;">
+            <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+            </tr>
+            {% for pilot in selected_pilots %}
+            <tr>
+                <td>{{ pilot[0] }}</td>
+                <td>{{ pilot[1] }} {{ pilot[2] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div>
+        <h3>Flight Attendants</h3>
+        <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;">
+            <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+            </tr>
+            {% for flight_attendant in selected_flight_attendants %}
+            <tr>
+                <td>{{ flight_attendant[0] }}</td>
+                <td>{{ flight_attendant[1] }} {{ flight_attendant[2] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+</div>
+
+<div style="display: flex; gap: 20px; justify-content: center; margin-top: 20px;">
+
+    <form action="/finalize_flight" method="POST"
+        style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <h3>Set Ticket Prices</h3>
+        <table>
+            <tr>
+                <td>Economy Class Price ($):</td>
+                <td><input type="number" name="economy_price" required min="0" step="0.01"></td>
+            </tr>
+            {% if plane[1] == 'Large' %}
+            <tr>
+                <td>Business Class Price ($):</td>
+                <td><input type="number" name="business_price" required min="0" step="0.01"></td>
+            </tr>
+            {% endif %}
+        </table>
+        <input type="submit" value="Confirm & Create Flight"
+            style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+    </form>
+</div>
+
+{% endif %}
+{% endblock %}

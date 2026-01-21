@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}<div align="center">
+    {% if error_msg %}
+    <p style="color: red;">{{ error_msg }}</p>
+    <form action="/order_management" method="get">
+        <input type="submit" value="Try Again">
+    </form>
+    {% else %}
+    <h1>
+        Order search
+    </h1>
+    <form action="/order_management" method="post">
+        <table>
+            <tr>
+                <td>
+                    Email:
+                </td>
+                <td>
+                    <input type="email" name="email" value="{{ session.get('email', '') }}" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Order number:
+                </td>
+                <td>
+                    <input type="text" name="order_number" required>
+                </td>
+            </tr>
+        </table>
+        <input type="submit" value="Search">
+    </form>
+    {% if tickets %}
+    <h2>
+        Your ordered tickets:
+    </h2>
+    <table>
+        <tr>
+            <th>
+                Number
+            </th>
+            <th>
+                Row
+            </th>
+            <th>
+                Col
+            </th>
+            <th>
+                Order number
+            </th>
+            <th>
+                plane ID
+            </th>
+            <th>
+                Class
+            </th>
+            <th>
+                Departure_time
+            </th>
+            <th>
+                Departure_date
+            </th>
+            <th>
+                Price
+            </th>
+            <th>
+                Status
+            </th>
+        </tr>
+        {% for ticket in range(tickets|length) %}
+        <tr>
+            <td>
+                {{ticket+1}}
+            </td>
+            <td>
+                {{tickets[ticket]['row']}}
+            </td>
+            <td>
+                {{tickets[ticket]['col']}}
+            </td>
+            <td>
+                {{tickets[ticket]['fk_ticket_order_id']}}
+            </td>
+            <td>
+                {{tickets[ticket]['fk_ticket_plane_id']}}
+            </td>
+            <td>
+                {{tickets[ticket]['fk_ticket_class']}}
+            </td>
+            <td>
+                {{tickets[ticket]['fk_ticket_departure_time']}}
+            </td>
+            <td>
+                {{tickets[ticket]['fk_ticket_departure_date']}}
+            </td>
+            <td>
+                {{tickets[ticket]['price']}}
+            </td>
+            <td>
+                {{status}}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <p>
+        Total price: {{total_price}}
+    </p>
+    <h2>
+        {% if is_cancellable %}
+        <p style="color: green;">The order is cancellable</p>
+        <p style="color: green;">The cancellation fee is 5% of the total price</p>
+        <form action="/cancel_order" method="GET">
+            <input type="submit" value="Cancel Order">
+        </form>
+        {% else %}
+        <p style="color: red;">The order is not cancellable</p>
+        {% endif %}
+    </h2>
+    {% endif %}
+    {% endif %}
+    {% if session.get('name', None) %}
+    <h2>
+        Your purchase history:
+    </h2>
+    <form action="/purchase_history" method="GET">
+        <input type="submit" value="Purchase history">
+    </form>
+    {% endif %}
+
+    {% endblock %}

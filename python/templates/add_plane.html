@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <h1>
+        Add a new plane
+    </h1>
+    <form action="/add_plane" method="POST">
+        <table>
+            <tr>
+                <td>
+                    Plane ID:
+                </td>
+                <td>
+                    <input type="text" name="plane_id">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    purchase_date:
+                </td>
+                <td>
+                    <input type="date" name="purchase_date">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Size:
+                </td>
+                <td>
+                    <input type="radio" name="size" value="small" required>Small
+                    <input type="radio" name="size" value="large" required>Large
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    manufacturer:
+                </td>
+                <td>
+                    <input type="radio" name="manufacturer" value="airbus" required>Airbus
+                    <input type="radio" name="manufacturer" value="boeing" required>Boeing
+                    <input type="radio" name="manufacturer" value="dassault" required>Dassault
+                </td>
+            </tr>
+            <tr>
+                <td>Economy Class Rows:</td>
+                <td><input type="number" name="economy_rows" required min="1"></td>
+            </tr>
+            <tr>
+                <td>Economy Class Columns:</td>
+                <td><input type="number" name="economy_cols" required min="1"></td>
+            </tr>
+            <tr>
+                <td>Business Class Rows (Large only):</td>
+                <td><input type="number" name="business_rows" min="1"></td>
+            </tr>
+            <tr>
+                <td>Business Class Columns (Large only):</td>
+                <td><input type="number" name="business_cols" min="1"></td>
+            </tr>
+        </table>
+        <input type="submit" value="Add Plane">
+    </form>
+    {% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <h1>
+        Add a new employee
+    </h1>
+    <form action="/add_employee" method="POST">
+        <table>
+            <tr>
+                <td>
+                    ID:
+                </td>
+                <td>
+                    <input type="text" name="id" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    First name:
+                </td>
+                <td>
+                    <input type="text" name="first_name" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Last name:
+                </td>
+                <td>
+                    <input type="text" name="last_name" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Phone number:
+                </td>
+                <td>
+                    <input type="text" name="phone_number" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    House number:
+                </td>
+                <td>
+                    <input type="text" name="house_number" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    City:
+                </td>
+                <td>
+                    <input type="text" name="city" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Street:
+                </td>
+                <td>
+                    <input type="text" name="street" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Long flight certification:
+                </td>
+                <td>
+                    <input type="radio" name="long_flight_certificate" value="1" required>Certified
+                    <input type="radio" name="long_flight_certificate" value="0" required>Not Certified
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Role:
+                </td>
+                <td>
+                    <input type="radio" name="role" value="Pilot" required>Pilot
+                    <input type="radio" name="role" value="Flight attendant" required>Flight Attendant
+                </td>
+            </tr>
+        </table>
+        <input type="submit" value="Add Employee">
+    </form>
+    {% endblock %}

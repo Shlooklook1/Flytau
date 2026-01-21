@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <h1>
+        Choose your next flight!
+    </h1>
+    <form action="/" method="POST" class="flight_form">
+        <table class="input-layout">
+            <tr>
+                <td>
+                    Select your origin 🛫:
+                </td>
+                <td>
+                    <select name="origin">
+                        <option value="">All</option>
+                        {% for i in origin %}
+                        <option value="{{i['origin']}}">{{i['origin']}}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Select your destination 🛬:
+                </td>
+                <td>
+                    <select name="destination">
+                        <option value="">All</option>
+                        {% for i in destination %}
+                        <option value="{{i['destination']}}">{{i['destination']}}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Choose date:
+                </td>
+                <td>
+                    <input type="date" name="date">
+                </td>
+            </tr>
+        </table>
+        <input type="submit" value="Search" class="submit-button">
+    </form>
+</div>
+<div align="center">
+    <p>
+        <a href="/order_management" class="btn">
+            Order management
+        </a>
+    </p>
+</div>
+{% endblock %}

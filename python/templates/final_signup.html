@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <form action="/final_signup" method="POST">
+        <table>
+            {% for i in range(session['num_of_phone_numbers']) %}
+            <tr>
+                <td>
+                    Phone number {{i+1}}:
+                </td>
+                <td>
+                    <input type="tel" name="phone_number_{{i+1}}" required>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <input type="submit" value="Continue">
+    </form>
+</div>
+{% endblock %}

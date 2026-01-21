@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <h1>
+        Are you sure you want to cancel this flight?
+    </h1>
+    <table>
+        <tr>
+            <th> Origin </th>
+            <th> Destination </th>
+            <th> Departure date </th>
+            <th> Departure time </th>
+            <th> Arrival date </th>
+            <th> Arrival time </th>
+            <th> Duration </th>
+            <th> Plane </th>
+        </tr>
+        <tr>
+            <td> {{flight["fk_origin"]}} </td>
+            <td> {{flight["fk_destination"]}} </td>
+            <td> {{flight["departure_date"]}} </td>
+            <td> {{flight["departure_time"]}} </td>
+            <td> {{flight["arrival_date"]}} </td>
+            <td> {{flight["arrival_time"]}} </td>
+            <td> {{flight["duration"]/60}} hours </td>
+            <td> {{flight["fk_flight_plane_id"]}} </td>
+        </tr>
+    </table>
+    <h3>
+        The following air crew members will be affected:
+    </h3>
+    <table>
+        <tr>
+            <th> ID </th>
+            <th> First name </th>
+            <th> Last name </th>
+            <th> Role </th>
+        </tr>
+        {% for air_crew_member in assignments %}
+        <tr>
+            <td> {{air_crew_member["id"]}} </td>
+            <td> {{air_crew_member["first_name"]}} </td>
+            <td> {{air_crew_member["last_name"]}} </td>
+            <td> {{air_crew_member["role"]}} </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% if affected_flights %}
+    <div
+        style="margin: 20px 0; padding: 15px; border: 2px solid #dc3545; border-radius: 8px; background-color: rgba(220, 53, 69, 0.1);">
+        <h3 style="color: #dc3545; margin-top: 0;">
+            ⚠️ WARNING: Consequent Flights Affected!
+        </h3>
+        <p style="color: #dc3545; font-weight: bold;">
+            Cancelling this flight may affect the following scheduled flights which rely on this plane/crew:
+        </p>
+        <table style="width: 100%; border: 1px solid #dc3545;">
+            <tr style="background-color: #dc3545; color: white;">
+                <th>Origin</th>
+                <th>Destination</th>
+                <th>Date</th>
+                <th>Time</th>
+            </tr>
+            {% for af in affected_flights %}
+            <tr>
+                <td>{{ af["fk_origin"] }}</td>
+                <td>{{ af["fk_destination"] }}</td>
+                <td>{{ af["departure_date"] }}</td>
+                <td>{{ af["departure_time"] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p style="margin-top: 10px; font-style: italic;">
+            Please ensure to re-assign or update the schedule for these flights with the affected air crew!
+        </p>
+    </div>
+    {% endif %}
+    <form action="/confirm_cancel_flight" method="POST">
+        <input type="hidden" name="selected_flight_key" value="{{ session['selected_flight_key'] }}">
+        <input type="submit" value="Confirm Cancellation" class="submit-button">
+    </form>
+</div>
+{% endblock %}

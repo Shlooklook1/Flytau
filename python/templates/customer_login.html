@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    {% if error_msg %}
+    <p style="color: red;">{{ error_msg }}</p>
+    <form action="/customer_login" method="get">
+        <input type="submit" value="Try Again">
+    </form>
+    {% else %}
+    <h1>
+        Please login
+    </h1>
+    <form action="/customer_login" method="POST">
+        <table>
+            <tr>
+                <td>
+                    Email:
+                </td>
+                <td>
+                    <input type="email" name="email" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Password:
+                </td>
+                <td>
+                    <input type="password" name="password" required>
+                </td>
+            </tr>
+        </table>
+        <input type="submit" value="Login">
+    </form>
+    {% endif %}
+    {% endblock %}

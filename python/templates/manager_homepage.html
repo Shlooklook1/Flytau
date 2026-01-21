@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    <h1>
+        Flight Management
+    </h1>
+    {% if error_msg %}
+    <div class="error-message">{{ error_msg }}</div>
+    {% endif %}
+    <form action="/manager_homepage" method="POST" class="flight_form">
+        <table class="input-layout">
+            <tr>
+                <td>
+                    Select origin:
+                </td>
+                <td>
+                    <select name="origin">
+                        <option value="">All</option>
+                        {% for i in origin %}
+                        <option value="{{i['origin']}}">{{i['origin']}}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Select destination:
+                </td>
+                <td>
+                    <select name="destination">
+                        <option value="">All</option>
+                        {% for i in destination %}
+                        <option value="{{i['destination']}}">{{i['destination']}}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Choose date:
+                </td>
+                <td>
+                    <input type="date" name="date">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Choose status:
+                </td>
+                <td>
+                    <input type="checkbox" name="status" value="Active">Active
+                    <input type="checkbox" name="status" value="Full">Full
+                    <input type="checkbox" name="status" value="Cancelled">Cancelled
+                    <input type="checkbox" name="status" value="Landed">Landed
+                </td>
+            </tr>
+        </table>
+        <div style="text-align: center; margin-top: 15px;">
+            <input type="submit" value="Search" class="submit-button">
+        </div>
+    </form>
+    {% if flights is defined %}
+    {% if flights %}
+    <h3>Found {{ flights|length }} flights</h3>
+    <table>
+        <tr>
+            <th> Status </th>
+            <th> Origin </th>
+            <th> Destination </th>
+            <th> Departure date </th>
+            <th> Departure time </th>
+            <th> Arrival date </th>
+            <th> Arrival time </th>
+            <th> Duration </th>
+            <th> Plane </th>
+            <th> </th>
+        </tr>
+        {% for flight in flights %}
+        <tr>
+            <td> {{flight["status"]}} </td>
+            <td> {{flight["fk_origin"]}} </td>
+            <td> {{flight["fk_destination"]}} </td>
+            <td> {{flight["departure_date"]}} </td>
+            <td> {{flight["departure_time"]}} </td>
+            <td> {{flight["arrival_date"]}} </td>
+            <td> {{flight["arrival_time"]}} </td>
+            <td> {{flight["duration"]/60}} hours </td>
+            <td> {{flight["fk_flight_plane_id"]}} </td>
+            <td>
+                {% if flight['is_cancellable'] and flight['status'] not in ['Cancelled', 'Landed'] %}
+                <form action="/cancel_flight" method="POST">
+                    <input type="hidden" name="selected_flight_key"
+                        value="{{ flight['fk_flight_plane_id'] }}|{{ flight['departure_date'] }}|{{ flight['departure_time'] }}">
+                    <input type="submit" value="Cancel" class="submit-button">
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <h3>No flights with the selected parameters</h3>
+    {% endif %}
+    {% endif %}
+    <div class="content" style="margin-top: 40px; padding: 20px;">
+        <h3>More options</h3>
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <a href="/add_employee" class="btn">Add a new Employee</a>
+            <a href="/add_flight" class="btn">Add a new Flight</a>
+            <a href="/add_plane" class="btn">Add a new plane</a>
+            <a href="/reports" class="btn">Show me the reports</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

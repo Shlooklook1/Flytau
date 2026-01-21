@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+{% if error_msg %}
+<div class="error-message">{{ error_msg }}</div>
+<form action="/guest_login" method="get">
+    <input type="submit" value="Try Again" class="submit-button">
+</form>
+{% else %}
+
+<div align="center">
+    <h1>
+        Continue as a guest:
+    </h1>
+    <form action="/guest_login" method="POST" class="flight_form">
+        <table class="input-layout">
+            <tr>
+                <td>
+                    Email:
+                </td>
+                <td>
+                    <input type="email" name="email" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    First name:
+                </td>
+                <td>
+                    <input type="text" name="first_name" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Last name:
+                </td>
+                <td>
+                    <input type="text" name="last_name" required>
+                </td>
+            </tr>
+        </table>
+        <input type="submit" value="Continue" class="submit-button">
+    </form>
+
+    <div style="margin-top: 20px;">
+        <a href="/customer_login" class="submit-button">Login</a>
+        <a href="/customer_signup" class="submit-button">Signup</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

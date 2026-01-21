@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div align="center">
+    {% if error_msg %}
+    <div class="error-message">{{ error_msg }}</div>
+    <br>
+    <form action="/manager_login" method="get">
+        <input type="submit" value="Try Again">
+    </form>
+    {% else %}
+    <h1>
+        Manager login
+    </h1>
+    <form action="/manager_login" method="POST">
+        <table>
+            <tr>
+                <td>
+                    ID:
+                </td>
+                <td>
+                    <input type="text" name="id" required>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Password:
+                </td>
+                <td>
+                    <input type="password" name="password" required>
+                </td>
+            </tr>
+        </table>
+        <input type="submit" value="Login">
+    </form>
+    {% endif %}
+    {% endblock %}
