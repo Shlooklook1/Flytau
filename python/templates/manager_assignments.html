@@ -29,7 +29,7 @@
             {% endfor %}
         </table>
         {% else %}
-        <p>No available pilots</p>
+        <div class="error-message">Not enough available pilots</div>
         {% endif %}
         <h2>
             Select flight attendants (remember to select 3 for a short flight and 6 for a long flight):
@@ -44,7 +44,7 @@
             {% endfor %}
         </table>
         {% else %}
-        <p>No available flight attendants</p>
+        <div class="error-message">Not enough available flight attendants</div>
         {% endif %}
         <h2>
             Select plane:
@@ -59,10 +59,12 @@
             {% endfor %}
         </select>
         {% else %}
-        <p>No available planes</p>
+        <div class="error-message">No available planes</div>
         {% endif %}
         <br>
+        {% if available_pilots|length >= required_pilots and available_flight_attendants|length >= required_attendants and available_plane %}
         <input type="submit" value="add" class="submit-button">
+        {% endif %}
     </form>
 </div>
 {% endblock %}

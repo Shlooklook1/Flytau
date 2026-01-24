@@ -54,7 +54,8 @@
                     <input type="checkbox" name="report" value="5">
                 </td>
                 <td>
-                    Monthly activity summary for each aircraft in the fleet (number of flights performed, number of flights cancelled, utilization percantage, dominant route)
+                    Monthly activity summary for each aircraft in the fleet (number of flights performed, number of
+                    flights cancelled, utilization percantage, dominant route)
                 </td>
             </tr>
         </table>
@@ -67,7 +68,8 @@
         Average occupancy landed flights
     </h2>
     <p>
-        The average occupancy of landed flights is: {{result1.average_passengers_per_landed_flight}} customers per flight.
+        The average occupancy of landed flights is: {{result1.average_passengers_per_landed_flight}} customers per
+        flight.
     </p>
     {% endif %}
     {% if result2 %}
@@ -101,7 +103,7 @@
                 {{class['Class']}}
             </td>
             <td>
-                {{class['Total_income']}}
+                {{class['Total_income']}}$
             </td>
         </tr>
         {% endfor %}
@@ -147,10 +149,16 @@
                 {{employee['role']}}
             </td>
             <td>
-                {{employee['Short_flights_hours']}}
+                {{ employee['Short_flights_hours'] | int }} hours {% if ((employee['Short_flights_hours'] -
+                (employee['Short_flights_hours'] | int)) * 60) | round | int != 0 %} and {{
+                ((employee['Short_flights_hours'] - (employee['Short_flights_hours'] | int)) * 60) | round | int }}
+                minutes {% endif %}
             </td>
             <td>
-                {{employee['Long_flights_hours']}}
+                {{ employee['Long_flights_hours'] | int }} hours {% if ((employee['Long_flights_hours'] -
+                (employee['Long_flights_hours'] | int)) * 60) | round | int != 0 %} and {{
+                ((employee['Long_flights_hours'] - (employee['Long_flights_hours'] | int)) * 60) | round | int }}
+                minutes {% endif %}
             </td>
         </tr>
         {% endfor %}
@@ -189,7 +197,8 @@
     {% endif %}
     {% if result5 %}
     <h2>
-        Monthly activity summary for each aircraft in the fleet (number of flights performed, number of flights cancelled, utilization percantage, dominant route)
+        Monthly activity summary for each aircraft in the fleet (number of flights performed, number of flights
+        cancelled, utilization percantage, dominant route)
     </h2>
     <table>
         <tr>
@@ -242,4 +251,4 @@
         {% endfor %}
     </table>
     {% endif %}
-{% endblock %}
+    {% endblock %}

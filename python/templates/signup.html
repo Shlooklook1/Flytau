@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
+{#
+The first step of the customer registration process.
+Collects personal details like name, email, passport number, and password.
+#}
 <div align="center">
     <h1>
         Please signup
@@ -25,7 +29,7 @@
                     First_name:
                 </td>
                 <td>
-                    <input type="text" name="first_name" required>
+                    <input type="text" name="first_name" pattern="[a-zA-Z\s]+" title="English letters only" required>
                 </td>
             </tr>
             <tr>
@@ -33,7 +37,7 @@
                     Last_name:
                 </td>
                 <td>
-                    <input type="text" name="last_name" required>
+                    <input type="text" name="last_name" pattern="[a-zA-Z\s]+" title="English letters only" required>
                 </td>
             </tr>
             <tr>
@@ -41,7 +45,13 @@
                     Number of phone numbers:
                 </td>
                 <td>
-                    <input type="number" name="num_of_phone_numbers" required>
+                    <select name="num_of_phone_numbers" required>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
                 </td>
             </tr>
             <tr>

@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
+{#
+Displays a list of available flights for the customer to choose from.
+This is the search result page where users select a flight to book.
+#}
 <div align="center">
     {% if flights == [] %}
     <h1>
@@ -35,7 +39,8 @@
                 <td> {{flight["departure_time"]}} </td>
                 <td> {{flight["arrival_date"]}} </td>
                 <td> {{flight["arrival_time"]}} </td>
-                <td> {{flight["duration"]/60}} hours</td>
+                <td> {{ flight["duration"] // 60 }} hours {% if flight["duration"] % 60 != 0 %} and {{
+                    flight["duration"] % 60 }} minutes {% endif %}</td>
                 <td> {{flight["fk_flight_plane_id"]}} </td>
             </tr>
             {% endfor %}

@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
+{#
+Allows the user to select seats from the plane's layout.
+Displays Economy and (if available) Business class sections with occupied seats marked.
+#}
 <div align="center">
     <h1>
         Choose your seats!
@@ -13,19 +17,19 @@
             <table class="seat-map-table">
                 {% set cols = class_list[1].cols %}
                 {% set mid = cols // 2 %}
-                {% for i in range(class_list[1].rows) %}
+                {% for r in range(class_list[1].rows) %}
                 <tr>
-                    {% for j in range(cols) %}
+                    {% for c in range(cols) %}
 
-                    {% if cols % 2 == 0 and j == mid %}
+                    {% if cols % 2 == 0 and c == mid %}
                     <td class="aisle-spacer"></td>
                     {% endif %}
 
-                    {% if cols % 2 != 0 and j == mid %}
+                    {% if cols % 2 != 0 and c == mid %}
                     <td class="aisle-spacer"></td>
                     {% endif %}
 
-                    {% set business_seat = (i+1) ~ "-" ~ (j+1) %}
+                    {% set business_seat = (r+1)|string ~ "-" ~ (c+1)|string %}
                     <td>
                         {% if business_seat in business_occupied %}
                         <div class="seat-box occupied">X</div>
@@ -37,7 +41,7 @@
                         {% endif %}
                     </td>
 
-                    {% if cols % 2 != 0 and j == mid %}
+                    {% if cols % 2 != 0 and c == mid %}
                     <td class="aisle-spacer"></td>
                     {% endif %}
 
@@ -52,19 +56,19 @@
             <table class="seat-map-table">
                 {% set cols = class_list[0].cols %}
                 {% set mid = cols // 2 %}
-                {% for i in range(class_list[0].rows) %}
+                {% for r_e in range(class_list[0].rows) %}
                 <tr>
-                    {% for j in range(cols) %}
+                    {% for c_e in range(cols) %}
 
-                    {% if cols % 2 == 0 and j == mid %}
+                    {% if cols % 2 == 0 and c_e == mid %}
                     <td class="aisle-spacer"></td>
                     {% endif %}
 
-                    {% if cols % 2 != 0 and j == mid %}
+                    {% if cols % 2 != 0 and c_e == mid %}
                     <td class="aisle-spacer"></td>
                     {% endif %}
 
-                    {% set economy_seat = (i+1) ~ "-" ~ (j+1) %}
+                    {% set economy_seat = (r_e+1)|string ~ "-" ~ (c_e+1)|string %}
                     <td>
                         {% if economy_seat in economy_occupied %}
                         <div class="seat-box occupied">X</div>
@@ -76,7 +80,7 @@
                         {% endif %}
                     </td>
 
-                    {% if cols % 2 != 0 and j == mid %}
+                    {% if cols % 2 != 0 and c_e == mid %}
                     <td class="aisle-spacer"></td>
                     {% endif %}
 

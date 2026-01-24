@@ -1,5 +1,10 @@
 {% extends "base.html" %}
-{% block content %}<div align="center">
+{% block content %}
+{#
+Allows users (including guests) to look up an order by ID and email.
+Displays order details, tickets, and allows cancellation if eligible.
+#}
+<div align="center">
     {% if error_msg %}
     <p style="color: red;">{{ error_msg }}</p>
     <form action="/order_management" method="get">
@@ -94,7 +99,7 @@
                 {{tickets[ticket]['fk_ticket_departure_date']}}
             </td>
             <td>
-                {{tickets[ticket]['price']}}
+                {{tickets[ticket]['price']}}$
             </td>
             <td>
                 {{status}}
@@ -103,7 +108,7 @@
         {% endfor %}
     </table>
     <p>
-        Total price: {{total_price}}
+        Total price: {{total_price}}$
     </p>
     <h2>
         {% if is_cancellable %}

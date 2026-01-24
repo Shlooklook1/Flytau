@@ -1,97 +1,102 @@
 {% extends "base.html" %}
 {% block content %}
+{#
+Displays a list of past orders for a logged-in customer.
+Allows filtering by order status (Active, Finished, Cancelled).
+#}
 <div align="center">
-<h1>
-    Purchase history 
-</h1>
-<form action="/purchase_history" method="POST"> Filter by status: 
-    <select name="status">
-        <option value="">All</option>
-        <option value="Active">Active</option>
-        <option value="Finished">Finished</option>
-        <option value="Cancelled by customer">Cancelled by customer</option>
-        <option value="Cancelled by administrator">Cancelled by administrator</option>
-    </select>
-    <input type="submit" value="Filter">
-</form>
-{% if session.orders and session.orders|length > 0 %}
-<table>
-    <tr>
-        <th>
-            Order number
-        </th>
-        <th>
-            Order date
-        </th>
-        <th>
-            Order status
-        </th>
-        <th>
-            Total price
-        </th>
-        <th>
-            Origin
-        </th>
-        <th>
-            Destination
-        </th>
-        <th>
-            Departure time
-        </th>
-        <th>
-            Departure date
-        </th>
-        <th>
-            Arrival time
-        </th>
-        <th>
-            Arrival date
-        </th>
-        <th>
-            Flight duration
-        </th>
-    </tr>
-    {% for order in session.orders %}
-    <tr>
-        <td>
-            {{order['order_id']}}
-        </td>
-        <td>
-            {{order['order_date']}}
-        </td>
-        <td>
-            {{order['status']}}
-        </td>
-        <td>
-            {{order['total_price']}}
-        </td>
-        <td>
-            {{order['origin']}}
-        </td>
-        <td>
-            {{order['destination']}}
-        </td>
-        <td>
-            {{order['departure_time']}}
-        </td>
-        <td>
-            {{order['departure_date']}}
-        </td>
-        <td>
-            {{order['arrival_time']}}
-        </td>
-        <td>
-            {{order['arrival_date']}}
-        </td>
-        <td>
-            {{order['duration']/60}}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-{% else %}
-        <h3 style="margin-top: 50px; color: #666;">
-            No orders found for the selected status.
-        </h3>
+    <h1>
+        Purchase history
+    </h1>
+    <form action="/purchase_history" method="POST"> Filter by status:
+        <select name="status">
+            <option value="">All</option>
+            <option value="Active">Active</option>
+            <option value="Finished">Finished</option>
+            <option value="Cancelled by customer">Cancelled by customer</option>
+            <option value="Cancelled by administrator">Cancelled by administrator</option>
+        </select>
+        <input type="submit" value="Filter">
+    </form>
+    {% if session.orders and session.orders|length > 0 %}
+    <table>
+        <tr>
+            <th>
+                Order number
+            </th>
+            <th>
+                Order date
+            </th>
+            <th>
+                Order status
+            </th>
+            <th>
+                Total price
+            </th>
+            <th>
+                Origin
+            </th>
+            <th>
+                Destination
+            </th>
+            <th>
+                Departure time
+            </th>
+            <th>
+                Departure date
+            </th>
+            <th>
+                Arrival time
+            </th>
+            <th>
+                Arrival date
+            </th>
+            <th>
+                Flight duration
+            </th>
+        </tr>
+        {% for order in session.orders %}
+        <tr>
+            <td>
+                {{order['order_id']}}
+            </td>
+            <td>
+                {{order['order_date']}}
+            </td>
+            <td>
+                {{order['status']}}
+            </td>
+            <td>
+                {{order['total_price']}}$
+            </td>
+            <td>
+                {{order['origin']}}
+            </td>
+            <td>
+                {{order['destination']}}
+            </td>
+            <td>
+                {{order['departure_time']}}
+            </td>
+            <td>
+                {{order['departure_date']}}
+            </td>
+            <td>
+                {{order['arrival_time']}}
+            </td>
+            <td>
+                {{order['arrival_date']}}
+            </td>
+            <td>
+                {{ order['duration'] // 60 }} hours {% if order['duration'] % 60 != 0 %} and {{ order['duration'] % 60
+                }} minutes {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <h3 style="margin-top: 50px; color: #666;">
+        No orders found for the selected status.
+    </h3>
     {% endif %}
-{% endblock %}
+    {% endblock %}

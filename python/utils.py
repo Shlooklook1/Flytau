@@ -12,6 +12,7 @@ DB_PASSWORD = os.environ.get("DB_PASSWORD", "admin-flytau")
 DB_NAME = os.environ.get("DB_NAME", "flytaudb") 
 @contextmanager
 def db_cur():
+    #Context manager for database connections. Handles connection and cursor resources.
     mydb = None
     cursor = None
     try:
@@ -33,10 +34,12 @@ def db_cur():
             mydb.close()
 
 def get_flight(status):
+    #Retrieves flights from the database based on the status ('Active' or 'Landed').
+    #Filters by origin, destination, and date if provided in the flask session.
     session['origin'] = request.form.get('origin')
     session['destination'] = request.form.get('destination')
     session['date'] = request.form.get('date')
-    query = f'SELECT * FROM flight WHERE status = {status}'
+    query = f'SELECT * FROM flight WHERE status = {status} '
     params = []
     if session['origin']:
         query += " AND fk_origin = %s"
@@ -49,12 +52,16 @@ def get_flight(status):
     if session['date']:
         query += " AND departure_date = %s"
         params.append(session['date'])
+    
+    query += " ORDER BY departure_date DESC, departure_time DESC"
 
     with db_cur() as cursor:
         cursor.execute(query, tuple(params))
         return cursor.fetchall()
 
 def get_manager_flights():
+    #Retrieves flights for the manager's search functionality.
+    #Supports filtering by origin, destination, date, and multiple statuses.
     params = []
     # Use different keys for search parameters to avoid overwriting the lists of all origins/destinations
     session['search_origin'] = request.form.get('origin')
@@ -76,11 +83,13 @@ def get_manager_flights():
             placeholders = ', '.join(['%s'] * len(session['search_status']))
             query += f" AND status IN ({placeholders})"
             params.extend(session['search_status'])
+        query += " ORDER BY departure_date DESC, departure_time DESC"
         cursor.execute(query, tuple(params))
         return cursor.fetchall()
 
 
 class plane_class:
+    #Class representing a class of a plane (rows, columns) and type.
     def __init__(self, plane_id, type, rows, cols):
         self.plane_id = plane_id
         self.type = type
@@ -91,9 +100,14 @@ class plane_class:
 
     def get_occupied(self, date, time):
         with db_cur() as cursor:
+            s_time = str(time)
+            # Ensure HH:MM:SS format
+            if len(s_time.split(':')) == 2:
+                s_time += ":00"
+                
             cursor.execute("SELECT `row`, `col` FROM ticket WHERE fk_ticket_plane_id = %s "
                            "AND fk_ticket_class = %s AND fk_ticket_departure_time = %s "
-                           "AND fk_ticket_departure_date = %s", (self.plane_id, self.type, time, date))
+                           "AND fk_ticket_departure_date = %s", (self.plane_id, self.type, s_time, date))
             occupied = []
             seats = cursor.fetchall()
             for i in seats:
@@ -101,8 +115,9 @@ class plane_class:
             return occupied
 
 
-
 def seat_selection():
+    #Prepares data for the seat selection page.
+    #Determines the plane layout, date, time, and route info for the selected flight.
     flight_key = request.form.get('selected_flight_key')
     if flight_key:
         selected_flight = flight_key.split('|')
@@ -116,7 +131,7 @@ def seat_selection():
         return None, None, None, None, None, None
     with db_cur() as cursor:
         cursor.execute(" SELECT type, number_of_row, number_of_col FROM class WHERE fk_plane_id = %s"
-                       " ORDER BY type DESC", (plane_id,))
+                       " ORDER BY CAST(type AS CHAR) DESC", (plane_id,))
         classes = cursor.fetchall()
         class_list = []
         for i in classes:
@@ -130,6 +145,8 @@ def seat_selection():
 
 
 def is_long_flight(origin, destination):
+    #Checks if a flight between origin and destination is considered long (>= 6 hours).
+    #Returns True if long, False otherwise.
     with db_cur() as cursor:
         cursor.execute("SELECT duration FROM route WHERE origin = %s AND destination = %s", (origin, destination))
         duration = cursor.fetchone()
@@ -138,6 +155,8 @@ def is_long_flight(origin, destination):
         return False
 
 def arrival(origin, destination, departure_date, departure_time):
+    #Calculates the arrival date and time based on the route duration.
+    #Returns (arrival_date, arrival_time, duration).
     with db_cur() as cursor:
         cursor.execute("SELECT duration FROM route WHERE origin = %s AND destination = %s", (origin, destination))
         result = cursor.fetchone()
@@ -147,34 +166,29 @@ def arrival(origin, destination, departure_date, departure_time):
         
     duration = result["duration"]
 
-    # 1. טיפול בתאריך
     if isinstance(departure_date, str):
         departure_date = datetime.strptime(departure_date, '%Y-%m-%d').date()
         
-    # 2. טיפול בשעה (התיקון נמצא כאן)
     if isinstance(departure_time, str):
         try:
-            # מנסים קודם כל פורמט מלא עם שניות (08:00:00)
             departure_time = datetime.strptime(departure_time, '%H:%M:%S').time()
         except ValueError:
-            # אם זה נכשל, מנסים פורמט קצר בלי שניות (08:00)
             departure_time = datetime.strptime(departure_time, '%H:%M').time()
             
     elif isinstance(departure_time, timedelta):
-        # טיפול במקרה שהדאטה בייס מחזיר timedelta
         departure_time = (datetime.min + departure_time).time()
         
     if not departure_date or not departure_time:
         return None, None, None 
         
-    # 3. ביצוע החישוב
     full_departure = datetime.combine(departure_date, departure_time)
     full_arrival = full_departure + timedelta(minutes=duration)
     
-    # החזרה כ-String כדי למנוע קריסות ב-Session
     return full_arrival.date(), full_arrival.time(), duration
 
 def check_availability(entity_id, entity_type, origin, destination, target_dep_date, target_dep_time):
+    #Checks if a pilot, attendant, or plane is available for a given flight.
+    #Verifies location constraints, rest periods, and schedule overlaps.
     # Helper to check constraints for a single entity
     target_dep_dt = datetime.combine(target_dep_date, target_dep_time)
     
@@ -185,9 +199,6 @@ def check_availability(entity_id, entity_type, origin, destination, target_dep_d
     target_arr_dt = datetime.combine(target_arr_date, target_arr_time)
 
     with db_cur() as cursor:
-        # 1. Check for PREVIOUS flight (to determine location and readiness)
-        # We look for the latest flight that departed BEFORE our target departure
-        # Note: We need careful handling of dates/times for comparison in SQL
         query_prev = """
             SELECT F.fk_origin, F.fk_destination, F.departure_date, F.departure_time, F.status
             FROM flight F
@@ -205,16 +216,12 @@ def check_availability(entity_id, entity_type, origin, destination, target_dep_d
              """
         else:
              query_prev += " AND ACA.fk_air_crew_id = %s"
-             
-        # Add Time Filter and Sort
-        query_prev += " AND TIMESTAMP(departure_date, departure_time) < %s ORDER BY departure_date DESC, departure_time DESC LIMIT 1"
+        query_prev += " AND status IN ('Active', 'Landed', 'Full') AND TIMESTAMP(departure_date, departure_time) < %s ORDER BY departure_date DESC, departure_time DESC LIMIT 1"
         
         cursor.execute(query_prev, (entity_id, target_dep_dt))
         prev_flight = cursor.fetchone()
         
-        # Default state (new employee/plane) -> Assume available at Israel or implicitly 'Available'
-        # Prompt implies checking if they "landed", suggesting we must chain. 
-        # But for strictly new entities, we can default to available if no history.
+        # Default state is Israel
         curr_loc = "Israel" 
         ready_dt = datetime.min
         
@@ -230,21 +237,16 @@ def check_availability(entity_id, entity_type, origin, destination, target_dep_d
             
             p_dep_dt = datetime.combine(p_date, p_time)
 
-            if prev_status == 'Cancelled':
-                # If cancelled, they never left origin.
-                curr_loc = p_origin
-                ready_dt = p_dep_dt # Effectively available immediately/at dep time
+            # Active or Landed or Full
+            curr_loc = p_dest
+            # Calculate arrival
+            p_arr_date, p_arr_time, _ = arrival(p_origin, p_dest, p_date, p_time)
+            if p_arr_date:
+                    p_arr_dt = datetime.combine(p_arr_date, p_arr_time)
+                    ready_dt = p_arr_dt + timedelta(hours=2) # 2 hours rest
             else:
-                # Active or Landed
-                curr_loc = p_dest
-                # Calculate arrival
-                p_arr_date, p_arr_time, _ = arrival(p_origin, p_dest, p_date, p_time)
-                if p_arr_date:
-                     p_arr_dt = datetime.combine(p_arr_date, p_arr_time)
-                     ready_dt = p_arr_dt + timedelta(hours=2) # 2 hours rest
-                else:
-                     # Should not happen for valid flights
-                     ready_dt = p_dep_dt + timedelta(hours=5) # Fallback
+                    # Should not happen for valid flights
+                    ready_dt = p_dep_dt + timedelta(hours=5) # Fallback
 
         if curr_loc != origin:
             return False
@@ -274,12 +276,6 @@ def check_availability(entity_id, entity_type, origin, destination, target_dep_d
         
         # We need to find any flight that starts AFTER our previous reference (so we don't pick up the past flight)
         # AND starts BEFORE our projected available time (Target Arrival + buffer?)
-        # Actually simplest check: 
-        # Is there any flight where:
-        #   (ExistingStart < TargetEnd) AND (ExistingEnd > TargetStart)
-        # But calculating ExistingEnd for all is heavy.
-        # Simplified: Check if any flight starts in [TargetStart, TargetEnd + 2h]
-        
         query_next = query_overlap + " AND TIMESTAMP(departure_date, departure_time) >= %s ORDER BY departure_date ASC, departure_time ASC LIMIT 1"
         cursor.execute(query_next, (entity_id, target_dep_dt))
         next_flight = cursor.fetchone()
@@ -298,6 +294,8 @@ def check_availability(entity_id, entity_type, origin, destination, target_dep_d
     return True
 
 def available_pilots(origin, destination, date, time):
+    # Returns a list of available pilots for a specific route and time.
+    # Filters by role 'Pilot', long-flight certificate if needed, and availability logic.
     if is_long_flight(origin, destination):
         query_pilots = "SELECT id, first_name, last_name FROM air_crew WHERE role = 'Pilot' AND long_flight_certificate = 1"
     else:
@@ -325,6 +323,8 @@ def available_pilots(origin, destination, date, time):
     return relevant_pilots
 
 def available_flight_attendants(origin, destination, date, time):
+    # Returns a list of available flight attendants for a specific route and time.
+    # Filters by role 'Flight Attendant' and availability logic.
     if is_long_flight(origin, destination):
         query_fa = "SELECT id, first_name, last_name FROM air_crew WHERE role = 'Flight Attendant' AND long_flight_certificate = 1"
     else:
@@ -352,6 +352,8 @@ def available_flight_attendants(origin, destination, date, time):
     return relevant_fa
 
 def available_plane(origin, destination, date, time):
+    # Returns a list of available planes for a specific route and time.
+    # Filters by plane size (Large if long flight) and availability logic.
     if is_long_flight(origin, destination):
         query_plane = "SELECT * FROM plane WHERE size= 'Large'"
     else:
@@ -379,6 +381,7 @@ def available_plane(origin, destination, date, time):
     return relevant_planes
 
 class Flight:
+    # Class representing a flight. Handles flight creation.
     def __init__(self, plane_id, departure_time, departure_date, origin, destination):
         self.plane_id = plane_id
         self.departure_time = departure_time
@@ -391,7 +394,7 @@ class Flight:
             # 1. Insert Flight
             cursor.execute("INSERT INTO flight (fk_flight_plane_id, departure_time, departure_date, fk_origin, fk_destination, status) VALUES (%s, %s, %s, %s, %s, %s)", (self.plane_id, self.departure_time, self.departure_date, self.origin, self.destination, self.status))
             
-            # 2. Insert Air Crew Assignments
+            # 2. Insert Air Crew Assignments 
             # Pilots
             for p_id in pilots_ids:
                 cursor.execute("INSERT INTO air_crew_assignment (fk_assignment_plane_id, fk_assignment_departure_date, fk_assignment_departure_time, fk_air_crew_id) VALUES (%s, %s, %s, %s)", (self.plane_id, self.departure_date, self.departure_time, p_id))
@@ -407,6 +410,7 @@ class Flight:
                 cursor.execute("INSERT INTO flight_price (fk_price_plane_id, fk_price_departure_date, fk_price_departure_time, fk_price_class, price) VALUES (%s, %s, %s, %s, %s)", (self.plane_id, self.departure_date, self.departure_time, 'Business', business_price))
 
 class ticket:
+    # Class representing a ticket. Handles ticket creation.
     def __init__(self, row, col, order_id, plane_id, class_type, departure_time, departure_date, price):
         self.row = row
         self.col = col
@@ -423,6 +427,7 @@ class ticket:
 
 
 def generate_unique_order_id():
+    # Generates a unique 6-character order ID (uppercase letters and digits).
     while True:
         chars = string.ascii_uppercase + string.digits
         order_id = ''.join(random.choices(chars, k=6))
@@ -433,6 +438,7 @@ def generate_unique_order_id():
             if not exists:
                 return order_id
 class order:
+    # Class representing an order. Handles order creation.
     def __init__(self, email, cost, order_id=None):
         if order_id:
             self.order_id = order_id
@@ -448,6 +454,8 @@ class order:
             cursor.execute("INSERT INTO `order` (order_id, fk_order_email, status, order_date, order_cost) VALUES (%s, %s, %s, %s, %s)", (self.order_id, self.email, self.status, self.date, self.cost))
         
 def get_prices():
+    # Retrieves economy and business class prices for the current flight in session.
+    # Returns (economy_price, business_price, total_price).
     economy_price = 0
     business_price = 0
     query = "SELECT fk_price_class, price FROM flight_price WHERE fk_price_plane_id = %s AND fk_price_departure_date = %s AND fk_price_departure_time = %s"
@@ -464,11 +472,10 @@ def get_prices():
                 economy_price = p['price']
             elif p['fk_price_class'] == 'Business':
                 business_price = p['price']
-                
-    # Using 'business_seats' to match main.py's recent changes
     total_price = economy_price * len(session.get('economy_seats', [])) + business_price * len(session.get('business_seats', []))            
     return economy_price, business_price, total_price
 def insert_new_tickets(plane_id, departure_date, departure_time, economy_seats, business_seats):
+    # Inserts selected tickets (Economy and Business) into the database.
     query = "INSERT INTO ticket (`row`, `col`, fk_plane_id, class, fk_departure_time, fk_departure_date) VALUES (%s, %s, %s, %s, %s, %s)"
 
     with db_cur() as cursor:
@@ -481,6 +488,8 @@ def insert_new_tickets(plane_id, departure_date, departure_time, economy_seats, 
                 cursor.execute(query, (seat[0], seat[1], plane_id, 'Business', departure_time, departure_date))
 
 def is_cancellable(flight_date, flight_time, status, hours_limit):
+    # Checks if a flight can be cancelled based on the time remaining.
+    # Returns True if time remaining > hours_limit, False otherwise.
     if status != 'Active' and status != 'Full':
         return False
     if isinstance(flight_date, str):
@@ -511,6 +520,8 @@ def is_cancellable(flight_date, flight_time, status, hours_limit):
     return time_remaining > timedelta(hours=hours_limit)
 
 def order_details(order_id):
+    # Retrieves details for a specific order by ID, including flight and price info.
+    # Returns a tuple of order details.
     with db_cur() as cursor:
         cursor.execute("SELECT price, fk_ticket_plane_id, fk_ticket_departure_time, fk_ticket_departure_date FROM ticket WHERE fk_ticket_order_id = %s", (order_id,))
         flight_key = cursor.fetchall()
@@ -537,6 +548,8 @@ def order_details(order_id):
     return total_price, origin, destination, str(departure_time), str(departure_date), str(arrival_date), str(arrival_time), duration
 
 def reports():
+    # Generates selected reports by executing SQL queries.
+    # Returns results for each report type requested in the form.
     reports = request.form.getlist('report')
     result1 = None
     result2 = None
@@ -544,16 +557,21 @@ def reports():
     result4 = None
     result5 = None
     query1 = """
-SELECT ROUND(COALESCE(AVG(ticket_num), 0), 2) AS average_passengers_per_landed_flight
-FROM (
-    SELECT COUNT(t.`row`) AS ticket_num 
-    FROM flight AS f 
-    LEFT JOIN ticket AS t ON 
-        f.fk_flight_plane_id = t.fk_ticket_plane_id AND 
-        f.departure_time = t.fk_ticket_departure_time AND 
-        f.departure_date = t.fk_ticket_departure_date 
-    WHERE f.status = 'Landed' 
-    GROUP BY f.fk_flight_plane_id, f.departure_time, f.departure_date
+SELECT
+    ROUND(COALESCE(AVG(ticket_num), 0), 2) AS average_passengers_per_landed_flight
+FROM(
+    SELECT 
+        COUNT(o.order_id) AS ticket_num
+    FROM
+        flight AS f 
+        LEFT JOIN ticket AS t ON f.fk_flight_plane_id = t.fk_ticket_plane_id 
+                              AND f.departure_time = t.fk_ticket_departure_time 
+                              AND f.departure_date = t.fk_ticket_departure_date
+        LEFT JOIN `order` AS o ON t.fk_ticket_order_id = o.order_id AND o.status = 'Finished'
+    WHERE
+        f.status = 'Landed'
+    GROUP BY
+        f.fk_flight_plane_id, f.departure_time, f.departure_date
 ) AS Avgtable;
 """
     query2 = """
@@ -598,53 +616,59 @@ GROUP BY
 SELECT
 	YEAR(O.order_date) `Year`,
     MONTH(O.order_date) `Month`,
-    ROUND(((SUM(CASE WHEN O.status = 'Cancelled by customer' THEN 1 ELSE 0 END)) / COUNT(*)) * 100, 2) AS AVG_Cancelation
+    COALESCE(ROUND(((SUM(CASE WHEN O.status = 'Cancelled by customer' THEN 1 ELSE 0 END)) / COUNT(*)) * 100, 2), 0) AS AVG_Cancelation
 FROM
 	`order` AS O
 GROUP BY
 	YEAR(O.order_date),
-    MONTH(O.order_date);
+    MONTH(O.order_date)
+ORDER BY
+    `Year`, `Month`;
 """
     query5 = """
 SELECT
-	P.plane_id,
-	YEAR(F.departure_date) `Year`,
+    P.plane_id,
+    YEAR(F.departure_date) `Year`,
     MONTH(F.departure_date) `Month`,
-    SUM(CASE 
-		WHEN F.`status` = 'Landed' THEN 1 ELSE 0 END) Landed_flights,
-    SUM(CASE 
-		WHEN F.`status` = 'Cancelled' THEN 1 ELSE 0 END) Cancelled_flights,
-    ROUND((COUNT(DISTINCT(F.departure_date)) / 30.0) * 100, 2) AS Utilization,
-    (SELECT 
-		CONCAT(F2.fk_origin,'-',F2.fk_destination)
+    COALESCE(SUM(CASE 
+        WHEN F.`status` = 'Landed' THEN 1 ELSE 0 END), 0) Landed_flights,
+    COALESCE(SUM(CASE 
+        WHEN F.`status` = 'Cancelled' THEN 1 ELSE 0 END), 0) Cancelled_flights,
+    COALESCE(ROUND((COUNT(DISTINCT CASE WHEN F.status = 'Landed' THEN F.departure_date END) / 30.0) * 100, 2), 0) AS Utilization,
+    COALESCE((SELECT 
+        CONCAT(F2.fk_origin,'-',F2.fk_destination)
     FROM
-		flight F2
-	WHERE 
-		F2.fk_flight_plane_id = P.plane_id AND
+        flight F2
+    WHERE 
+        F2.fk_flight_plane_id = P.plane_id AND
         YEAR(F2.departure_date) = YEAR(MAX(F.departure_date)) AND
-        MONTH(F2.departure_date) = MONTH(MAX(F.departure_date))
+        MONTH(F2.departure_date) = MONTH(MAX(F.departure_date)) AND
+        F2.`status` = 'Landed'
     GROUP BY
-		F2.fk_origin,
+        F2.fk_origin,
         F2.fk_destination
     HAVING 
-		COUNT(*) >= ALL (SELECT
-							COUNT(*)
-						 FROM
-							flight F3
-						 WHERE 
-							F3.fk_flight_plane_id = P.plane_id AND
-							YEAR(F3.departure_date) = YEAR(MAX(F.departure_date)) AND
-							MONTH(F3.departure_date) = MONTH(MAX(F.departure_date))
-						 GROUP BY
-							F3.fk_origin,
-							F3.fk_destination)
-	LIMIT 1) Dominant_route
+        COUNT(*) >= ALL (SELECT
+                            COUNT(*)
+                         FROM
+                            flight F3
+                         WHERE 
+                            F3.fk_flight_plane_id = P.plane_id AND
+                            YEAR(F3.departure_date) = YEAR(MAX(F.departure_date)) AND
+                            MONTH(F3.departure_date) = MONTH(MAX(F.departure_date)) AND
+                            F3.`status` = 'Landed'
+                         GROUP BY
+                            F3.fk_origin,
+                            F3.fk_destination)
+    LIMIT 1), 'No dominant route') Dominant_route
 FROM
-	plane P LEFT JOIN flight F ON P.plane_id = F.fk_flight_plane_id
+    plane P LEFT JOIN flight F ON P.plane_id = F.fk_flight_plane_id
 GROUP BY
-	P.plane_id,
-	YEAR(F.departure_date),
-	MONTH(F.departure_date);
+    P.plane_id,
+    YEAR(F.departure_date),
+    MONTH(F.departure_date)
+ORDER BY
+	P.plane_id, `Year`, `Month`;
 """
     if '1' in reports:
         with db_cur() as cursor:
@@ -670,6 +694,8 @@ GROUP BY
 
 
 def update_db():
+    # Updates flight statuses in the database.
+    # Marks flights as 'Landed' if arrival time passed, and 'Full' if capacity reached.
     with db_cur() as cursor:
         # Update 'Landed' flights
         cursor.execute("""

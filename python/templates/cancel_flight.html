@@ -22,7 +22,8 @@
             <td> {{flight["departure_time"]}} </td>
             <td> {{flight["arrival_date"]}} </td>
             <td> {{flight["arrival_time"]}} </td>
-            <td> {{flight["duration"]/60}} hours </td>
+            <td> {{ flight["duration"] // 60 }} hours {% if flight["duration"] % 60 != 0 %} and {{ flight["duration"] %
+                60 }} minutes {% endif %} </td>
             <td> {{flight["fk_flight_plane_id"]}} </td>
         </tr>
     </table>

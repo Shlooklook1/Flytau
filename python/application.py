@@ -18,8 +18,10 @@ application.config.update(
 )
 application.secret_key = 'super_secret_key'
 
+
 @application.before_request
 def save_last_visited_url():
+    #Tracks the user's navigation history to allow 'Go Back' functionality.
     # List of endpoints to ignore for history tracking
     ignored_endpoints = ['static', 'go_back', 'log_out']
     if request.endpoint in ignored_endpoints:
@@ -41,24 +43,27 @@ def save_last_visited_url():
 
 @application.route('/go_back')
 def go_back():
+    #Redirects the user to the previous page in their navigation history.
     history = session.get('url_history', [])
     if len(history) > 1:
         history.pop() # Current page
         session['url_history'] = history
         return redirect(history[-1])
     elif len(history) == 1:
-        # If only one page in history, just stay there or redirect home? 
-        # Usually button shouldn't show, but for safety:
         return redirect(history[0])
     return redirect('/')
 
 @application.route('/log_out', methods=['POST','GET'])
 def log_out():
+    #Logs the user out by clearing the session and redirecting to home.
     session.clear()
     return redirect('/')
 
 @application.route('/', methods=['POST','GET'])
 def home_page():
+    #Renders the homepage.
+    #Handles flight search for customers and displays results.
+    #If a manager is logged in, redirects to the manager homepage.
     if 'id' in session:
         return redirect('/manager_homepage')
     if request.method == 'POST':
@@ -72,6 +77,7 @@ def home_page():
         return render_template('customer_flights.html', flights = flights)
     else:
         # Reset history when visiting home page to prevent stuck Back button
+        utils.clear_session()
         session['url_history'] = [request.url]
         with utils.db_cur() as cursor:
             cursor.execute("SELECT DISTINCT(origin) FROM route")
@@ -83,6 +89,8 @@ def home_page():
 
 @application.route('/seat_select', methods=['POST','GET'])
 def seat_select():
+    #Renders the seat selection page.
+    #Initializes session data for the booking flow and fetches occupied seats.
     if 'id' in session:
         return redirect('/manager_homepage')
     
@@ -108,6 +116,9 @@ def seat_select():
 
 @application.route('/customer_summary', methods=['POST','GET'])
 def customer_summary():
+    #Displays the booking summary for customers.
+    #Processes selected seats and calculates prices.
+    #Requires login (via guest or existing customer).
     if 'id' in session:
         return redirect('/manager_homepage')
     
@@ -161,12 +172,14 @@ def customer_summary():
 
 @application.route('/guest_login', methods=['POST','GET'])
 def guest_login():
+    #Handles guest login during booking flow.
+    #Captures or updates basic customer details in the database.
     if 'id' in session:
         return redirect('/manager_homepage')
     if request.method == 'POST':
         session['email'] = request.form.get('email')
-        session['first_name'] = request.form.get('first_name')
-        session['last_name'] = request.form.get('last_name')
+        session['first_name'] = request.form.get('first_name').title()
+        session['last_name'] = request.form.get('last_name').title()
         with utils.db_cur() as cursor:
             cursor.execute("SELECT * FROM customer WHERE email = %s", (session['email'],))
             customer = cursor.fetchone()
@@ -181,6 +194,8 @@ def guest_login():
 
 @application.route('/add_flight', methods=['POST','GET'])
 def add_flight():
+    #Step 1 of flight creation for managers.
+    #Allows selecting route and date/time, then shows available resources.
     if request.method == 'POST':
         utils.update_db()
         session["origin"] = request.form.get('origin')
@@ -206,6 +221,9 @@ def add_flight():
 
 @application.route('/manager_assignments', methods=['POST','GET'])
 def manager_assignments():
+    #Step 2 of flight creation.
+    #Validates selected crew and plane against flight requirements.
+    #Detects potential conflicts with other flights.
     error_msg = None 
     if request.method == 'POST':
         session["selected_pilot"] = request.form.getlist('selected_pilot')
@@ -229,11 +247,26 @@ def manager_assignments():
              return render_template('manager_assignments.html', available_flight_attendants = available_flight_attendants,
                                 available_pilots = available_pilots, available_plane = available_plane, duration=session["duration"], error_msg=error_msg)
 
+        affected_flights = []
+        with utils.db_cur() as cursor:
+             cursor.execute("""
+                SELECT * FROM flight 
+                WHERE fk_flight_plane_id = %s 
+                AND status IN ('Active', 'Landed')
+                AND (departure_date > %s OR (departure_date = %s AND departure_time >= %s))
+                ORDER BY departure_date ASC, departure_time ASC
+                LIMIT 1
+            """, (session["plane"][0], session["date"], session["date"], session["time"]))
+             next_flight = cursor.fetchone()
+             if next_flight and next_flight['fk_origin'] != session["destination"]:
+                  affected_flights.append(next_flight)
+
         return render_template('manager_summary.html',error_msg=error_msg, selected_pilots=session["selected_pilot"],
                                    selected_flight_attendants=session["selected_flight_attendant"], plane=session["plane"], 
                                    departure_date=session["date"], departure_time=session["time"], origin=session["origin"],
                                     destination=session["destination"], duration = session['duration'],
-                                    arrival_date=session["arrival_date"], arrival_time=session["arrival_time"]) 
+                                    arrival_date=session["arrival_date"], arrival_time=session["arrival_time"],
+                                    affected_flights=affected_flights) 
     else:
         available_pilots = utils.available_pilots(session["origin"], session["destination"], session["date"], session["time"])
         available_flight_attendants = utils.available_flight_attendants(session["origin"], session["destination"], session["date"], session["time"])
@@ -243,6 +276,8 @@ def manager_assignments():
 
 @application.route('/manager_login', methods=['POST','GET'])
 def manager_login():
+    #Handles manager authentication.
+    #Redirects to manager homepage on success.
     if request.method == 'POST':
         session["id"] = request.form.get('id')
         session["password"] = request.form.get('password')
@@ -259,6 +294,8 @@ def manager_login():
 
 @application.route('/manager_homepage', methods=['POST','GET'])
 def manager_homepage():
+    #Renders the manager's dashboard.
+    #Displays flight list with filtering and management options.
     if request.method == 'POST':
         utils.update_db()
         flights = utils.get_manager_flights()
@@ -270,6 +307,7 @@ def manager_homepage():
             flight['is_cancellable'] = utils.is_cancellable(flight['departure_date'], flight['departure_time'], flight['status'], 72)
         return render_template('manager_homepage.html', flights = flights, origin=session.get("origin"), destination=session.get("destination"))
     else:
+        utils.clear_session()
         session['url_history'] = [request.url]
         with utils.db_cur() as cursor:
             cursor.execute("SELECT DISTINCT(origin) FROM route")
@@ -280,6 +318,8 @@ def manager_homepage():
 
 @application.route('/cancel_flight', methods=['POST'])
 def cancel_flight():
+    #Displays the confirmation page for flight cancellation.
+    #Shows details of the flight and any affected future flights.
     session["selected_flight_key"] = request.form.get('selected_flight_key')
     plane_id, dep_date, dep_time = session["selected_flight_key"].split("|")
     
@@ -316,6 +356,8 @@ def cancel_flight():
 
 @application.route('/confirm_cancel_flight', methods=['POST'])
 def confirm_cancel_flight():
+    #Executes the flight cancellation.
+    #Updates statuses, refunds tickets (price=0), cancels orders, and releases crew.
     flight_key_parts = request.form.get('selected_flight_key').split("|")
     plane_id = flight_key_parts[0]
     date = flight_key_parts[1]
@@ -347,6 +389,7 @@ def confirm_cancel_flight():
 
 @application.route('/add_employee', methods=['POST','GET'])
 def add_employee():
+    #Handles adding new crew members (pilots or flight attendants) to the system.
     if request.method == 'POST':
         id = request.form.get('id')
         first_name = request.form.get('first_name')
@@ -366,6 +409,8 @@ def add_employee():
 
 @application.route('/add_plane', methods=['POST','GET'])
 def add_plane():
+    #Handles adding new planes to the fleet.
+    #Creates both the plane record and its seating configuration (classes).
     if request.method == 'POST':
         plane_id = request.form.get('plane_id')
         purchase_date = request.form.get('purchase_date')
@@ -390,6 +435,8 @@ def add_plane():
 
 @application.route('/finalize_flight', methods=['POST','GET'])
 def finalize_flight():
+    #Final step of flight creation.
+    #Persists flight, crew assignments, and ticket prices to the database.
     flight = utils.Flight(session["plane"][0], session["time"], session["date"], session["origin"], session["destination"])
     
     pilots_ids = [p[0] for p in session["selected_pilot"]]
@@ -405,6 +452,8 @@ def finalize_flight():
 
 @application.route('/finalize_customer', methods=['POST','GET'])
 def finalize_customer():
+    #Finalizes the customer booking process.
+    #Creates the order and tickets in the database.
     if 'id' in session:
         return redirect('/manager_homepage')
         
@@ -425,6 +474,8 @@ def finalize_customer():
 
 @application.route('/customer_login', methods=['POST','GET'])
 def customer_login():
+    #Handles registered customer login.
+    #Redirects to previous flow step (booking) or home.
     if 'id' in session:
         return redirect('/manager_homepage')
     if request.method == 'POST':
@@ -463,12 +514,14 @@ def customer_login():
 
 @application.route('/customer_signup', methods=['POST','GET'])
 def customer_signup():
+    #Step 1 of customer registration.
+    #Collected personal details and credentials.
     if 'id' in session:
         return redirect('/manager_homepage')
     if request.method == 'POST':
         session["email"] = request.form.get('email')
-        session["first_name"] = request.form.get('first_name')
-        session["last_name"] = request.form.get('last_name')
+        session["first_name"] = request.form.get('first_name').title()
+        session["last_name"] = request.form.get('last_name').title()
         session["num_of_phone_numbers"] = int(request.form.get('num_of_phone_numbers'))
         session["passport_number"] = request.form.get('passport_number')
         session["birth_date"] = request.form.get('birth_date')
@@ -477,7 +530,13 @@ def customer_signup():
             cursor.execute("SELECT * FROM customer WHERE email = %s", (session["email"],))
             customer = cursor.fetchone()
             if customer:
-                return render_template('signup.html', error_msg="Email already exists")
+                cursor.execute("SELECT * FROM signed_customer WHERE fk_signed_email = %s", (session["email"],))
+                signed_customer = cursor.fetchone()
+                if signed_customer:
+                    return redirect('signup.html', error_msg="Email already exists")
+                cursor.execute("UPDATE customer SET first_name = %s, last_name = %s WHERE email = %s", (session["first_name"], session["last_name"], session["email"]))
+                cursor.execute("INSERT INTO signed_customer (fk_signed_email, passport, birth_date, sign_up_date, password) VALUES (%s, %s, %s, curdate(), %s)", (session["email"], session["passport_number"], session["birth_date"], session["password"]))
+                return redirect("/final_signup")
             else:
                 cursor.execute("INSERT INTO customer (email, first_name, last_name) VALUES (%s, %s, %s)", (session["email"], session["first_name"], session["last_name"]))
                 cursor.execute("INSERT INTO signed_customer (fk_signed_email, passport, birth_date, sign_up_date, password) VALUES (%s, %s, %s, curdate(), %s)", (session["email"], session["passport_number"], session["birth_date"], session["password"]))
@@ -490,10 +549,20 @@ def customer_signup():
                 session['flow_return_url'] = url_history[-2]
             else:
                 session['flow_return_url'] = '/'
+        
+        # Check if we came from the booking flow login page
+        if request.referrer and '/guest_login' in request.referrer:
+            session['signup_redirect_to_booking'] = True
+        elif request.referrer and '/customer_signup' not in request.referrer:
+            # Clear flag if coming from somewhere else (unless reloading same page)
+            session.pop('signup_redirect_to_booking', None)
+            
         return render_template('signup.html')
 
 @application.route('/final_signup', methods=['POST','GET'])
 def final_signup():
+    #Step 2 of customer registration.
+    #Collects phone numbers and finalizes the account creation.
     if 'id' in session:
         return redirect('/manager_homepage')
     if request.method == 'POST':
@@ -509,12 +578,17 @@ def final_signup():
         return_url = session.get('flow_return_url', '/')
         session.pop('flow_return_url', None)
 
+        if session.pop('signup_redirect_to_booking', None):
+             return redirect('/customer_summary')
+
         return redirect(return_url)
     else:
         return render_template('final_signup.html')
     
 @application.route('/order_management', methods=['POST','GET'])
 def order_management():
+    #Retrieves and displays a single order by ID for the guest/user to view status.
+    #Checks cancellation eligibility.
     if 'id' in session:
         return redirect('/manager_homepage')
     if request.method == 'POST':
@@ -546,12 +620,15 @@ def order_management():
  
 @application.route('/purchase_history', methods=['POST','GET'])
 def purchase_history():
+
+    #Displays the purchase history for a logged-in customer.
+    #Allows filtering by status and sorting by date.
     if 'id' in session:
         return redirect('/manager_homepage')
     if request.method == 'POST':
         status = request.form.get('status')
         if not status:
-            query = "SELECT * FROM `order` WHERE fk_order_email = %s"
+            query = "SELECT * FROM `order` WHERE fk_order_email = %s ORDER BY order_date DESC"
             with utils.db_cur() as cursor:
                 cursor.execute(query, (session['email'],))
                 session['orders'] = cursor.fetchall()
@@ -559,7 +636,7 @@ def purchase_history():
                     order['order_date'] = str(order['order_date'])
                     order['total_price'], order['origin'], order['destination'], order['departure_time'], order['departure_date'], order['arrival_date'], order['arrival_time'], order['duration'] = utils.order_details(order['order_id'])
         else:
-            query = "SELECT * FROM `order` WHERE status = %s AND fk_order_email = %s"
+            query = "SELECT * FROM `order` WHERE status = %s AND fk_order_email = %s ORDER BY order_date DESC"
             with utils.db_cur() as cursor:
                 cursor.execute(query, (status, session['email']))
                 session['orders'] = cursor.fetchall()
@@ -578,6 +655,8 @@ def purchase_history():
 
 @application.route('/cancel_order', methods=['POST','GET'])
 def cancel_order():
+    #Handles customer initiated order cancellation.
+    #Refunds 5% of cost and updates status if eligible.
     if 'id' in session:
         return redirect('/manager_homepage')
     if request.method == 'POST':
@@ -599,42 +678,14 @@ def cancel_order():
 
 @application.route('/reports', methods=['POST','GET'])
 def reports():
+    #Renders status reports for managers.
+    #Aggregates data based on user selection.
     if request.method == 'POST':
         result1, result2, result3, result4, result5 = utils.reports()   
         return render_template('reports.html', result1=result1, result2=result2, result3=result3, result4=result4, result5=result5)
     else:
         utils.update_db()
         return render_template('reports.html')
-def read_sql_file(filename):
-    with open(filename, 'r', encoding='utf-8') as f:
-        return f.read().split(';')
-
-@application.route('/setup_db')
-def setup_db():
-    try:
-        # שלב 1: בדיקה - אילו טבלאות קיימות כרגע?
-        with utils.db_cur() as cursor:
-            cursor.execute("SHOW TABLES")
-            tables = cursor.fetchall()
-            
-            # אם יש טבלאות, נציג אותן כדי לראות אם יש בעיה של אותיות גדולות/קטנות
-            if tables:
-                return f"<h1>Found Tables: {tables}</h1><p>Check if 'route' matches exactly (case sensitive!).</p>"
-
-        # שלב 2: אם אין טבלאות, ננסה ליצור אותן ונציג שגיאה אם נכשל
-        commands = read_sql_file('MySql_db.sql')
-        with utils.db_cur() as cursor:
-            for command in commands:
-                if command.strip():
-                    try:
-                        cursor.execute(command)
-                    except Exception as sql_err:
-                        # עצור הכל ותראה לי את השגיאה!
-                        return f"<h1>SQL Error Detected:</h1><p><b>Command:</b> {command[:100]}...</p><p><b>Error:</b> {sql_err}</p>"
-                        
-        return "<h1>Success! Tables created perfectly.</h1><a href='/'>Go Home</a>"
-    except Exception as e:
-        return f"<h1>System Error: {e}</h1>"
 
 if __name__ == '__main__':
     print("Running on http://127.0.0.1:5000")

@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-
+{#
+Shows a summary of the booking (selected seats, prices, flight details) before final confirmation.
+Allows the user to review their order before finalizing it.
+#}
 <div align="center">
     {% if error_msg %}
     <p class="error-message">{{ error_msg }}</p>
@@ -37,20 +40,20 @@
             <td>{{ departure_time }}</td>
             <td>{{ arrival_date }}</td>
             <td>{{ arrival_time }}</td>
-            <td>{{ duration/60 }}</td>
+            <td>{{ duration // 60 }} hours {% if duration % 60 != 0 %} and {{ duration % 60 }} minutes {% endif %}</td>
             <td>{{ plane_id }}</td>
             <td>{{ tickets[ticket][1] }}</td>
             <td>{{ tickets[ticket][0] }}</td>
             {% if tickets[ticket][1] == 'Economy' %}
-            <td>{{ economy_price }}</td>
+            <td>{{ economy_price }}$</td>
             {% else %}
-            <td>{{ business_price }}</td>
+            <td>{{ business_price }}$</td>
             {% endif %}
         </tr>
         {% endfor %}
     </table>
     <h2>
-        Total price: {{ total_price }}
+        Total price: {{ total_price }}$
     </h2>
 </div>
 

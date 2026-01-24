@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
+{#
+Interim page during the booking flow.
+Allows users to choose between continuing as a guest, logging in, or signing up.
+#}
 {% if error_msg %}
 <div class="error-message">{{ error_msg }}</div>
 <form action="/guest_login" method="get">
@@ -26,7 +30,7 @@
                     First name:
                 </td>
                 <td>
-                    <input type="text" name="first_name" required>
+                    <input type="text" name="first_name" pattern="[a-zA-Z\s]+" title="English letters only" required>
                 </td>
             </tr>
             <tr>
@@ -34,7 +38,7 @@
                     Last name:
                 </td>
                 <td>
-                    <input type="text" name="last_name" required>
+                    <input type="text" name="last_name" pattern="[a-zA-Z\s]+" title="English letters only" required>
                 </td>
             </tr>
         </table>
