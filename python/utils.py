@@ -39,8 +39,8 @@ def get_flight(status):
     session['origin'] = request.form.get('origin')
     session['destination'] = request.form.get('destination')
     session['date'] = request.form.get('date')
-    query = f'SELECT * FROM flight WHERE status = {status} '
-    params = []
+    query = "SELECT * FROM flight WHERE status = %s"
+    params = [status]
     if session['origin']:
         query += " AND fk_origin = %s"
         params.append(session['origin'])

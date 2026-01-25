@@ -533,7 +533,7 @@ def customer_signup():
                 cursor.execute("SELECT * FROM signed_customer WHERE fk_signed_email = %s", (session["email"],))
                 signed_customer = cursor.fetchone()
                 if signed_customer:
-                    return redirect('signup.html', error_msg="Email already exists")
+                    return render_template('signup.html', error_msg="Email already exists")
                 cursor.execute("UPDATE customer SET first_name = %s, last_name = %s WHERE email = %s", (session["first_name"], session["last_name"], session["email"]))
                 cursor.execute("INSERT INTO signed_customer (fk_signed_email, passport, birth_date, sign_up_date, password) VALUES (%s, %s, %s, curdate(), %s)", (session["email"], session["passport_number"], session["birth_date"], session["password"]))
                 return redirect("/final_signup")
@@ -689,4 +689,4 @@ def reports():
 
 if __name__ == '__main__':
     print("Running on http://127.0.0.1:5000")
-    application.run(debug=True)
+    application.run(debug=False)
