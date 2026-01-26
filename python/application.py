@@ -68,7 +68,7 @@ def home_page():
         return redirect('/manager_homepage')
     if request.method == 'POST':
         utils.update_db()
-        flights = utils.get_flight("'Active'")
+        flights = utils.get_flight("Active")
         for flight in flights:
             arrival_date, arrival_time, duration = utils.arrival(flight["fk_origin"], flight["fk_destination"], flight["departure_date"], flight["departure_time"])
             flight["arrival_date"] = str(arrival_date)
